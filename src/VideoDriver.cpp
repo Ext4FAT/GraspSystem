@@ -202,9 +202,15 @@ int VideoDriver::dobotCTRL()
 			else if (key == 'q'){
 				MySend("quit");
 			}
+			else if (key == 'k'){
+				MySend("up");
+			}
+			else if (key == 'j'){
+				MySend("down");
+			}
 			else if (key == 27){
 				break;
-			}
+			} 
 			if (preClick != click){
 				preClick = click;
 				if (calibrated && depth.at<float>(click)) {
