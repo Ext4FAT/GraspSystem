@@ -7,19 +7,13 @@ class VideoDriver: public FileOperation
 {
 public:
 	VideoDriver(const string& Dir, int width, int height, float fps = 60);
-	int dataAcquire();
+	int dobotCTRL();
 	Mat PXCImage2Mat(PXCImage* pxc);
 
 	inline string getSavePath(const string &dirPrefix, time_t slot, long framecnt);
 	inline string getSaveFileName(time_t slot, long framecnt);
 	inline string getSaveDirName(time_t slot);
 	
-	//
-	int testSVM(string dir);
-	int testRegion(string dir);
-	//
-	//demo with real-time capture video stream
-	int show();
 	//
 	int savePCD(const string &outfilename, Segmentation &myseg);
 	//
