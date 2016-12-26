@@ -25,7 +25,7 @@ void selectPoint(int event, int x, int y, int flags, void* paras)
 }
 
 //How to build a chessboard
-Mat makeChessBoard(int pixels, int count)
+Mat VideoDriver::makeChessBoard(int pixels, int count)
 //count: black count
 //pixels: for each black or white
 {
@@ -50,8 +50,9 @@ void drawCornerText(const Mat &color, const Mat &depth, const vector<Point2f> &c
 		putText(color, to_string(i++), c, 1, 2, Scalar(255, 0, 0));
 	}
 }
+
 //Find chessboard from image
-vector<Point2f> FindChessBoardCorners(Mat &color, Mat &depth, Size pattern = { 3, 3 })
+vector<Point2f> VideoDriver::findChessBoardCorners(Mat &color, Mat &depth, Size pattern)
 {
 	vector<Point2f> corners;
 	Mat gray;
@@ -85,10 +86,6 @@ vector<PXCPoint3DF32> calArmCoordinate(PXCPoint3DF32 origin, float side)
 		MESSAGE_COUT(++i, c.x << "," << c.y << "," << c.z);
 	return corresponding;
 }
-
-
-
-
 
 //Create Thread to Show Image 
 void myimshow(const string winname, Mat &img)
@@ -128,9 +125,8 @@ void placeWindows(int topk)
 	}
 }
 
-//Dir example: "..\\saveData\\"
-VideoDriver::VideoDriver(const string& Dir, int width, int height, float fps /*= 60*/) :
-dir_(Dir), depthDir_(Dir + "depth\\"), colorDir_(Dir + "color\\"), pcdDir_(Dir + "pcd\\"), fps_(fps)
+// Construct
+VideoDriver::VideoDriver(int width, int height, float fps)
 {
 	camera_.width = width;
 	camera_.height = height;
@@ -157,34 +153,7 @@ Mat VideoDriver::PXCImage2Mat(PXCImage* pxc)
 	return cvt;
 }
 
-//Save PXC Point Cloud to PCD file
-int VideoDriver::savePCD(const string& outfilename, Segmentation &myseg)
-{
-	ofstream ofs(outfilename);
-	ofs << "# .PCD v0.7 - Point Cloud Data file format" << endl;
-	ofs << "VERSION 0.7" << endl;
-	ofs << "FIELDS x y z" << endl;
-	ofs << "SIZE 4 4 4" << endl;
-	ofs << "TYPE F F F" << endl;
-	ofs << "COUNT 1 1 1" << endl;
-	ofs << "WIDTH " << myseg.mainRegions_[0].size() << endl;
-	ofs << "HEIGHT 1" << endl;
-	ofs << "VIEWPOINT 0 0 0 1 0 0 0" << endl;
-	ofs << "POINTS " << myseg.mainRegions_[0].size() << endl;
-	ofs << "DATA ascii" << endl;
-	//double scale = 1. / 300;
-	double scale = 1. / 330;
-	//vector<PXCPoint3DF32> obj_cloud;
-	for (auto& p : myseg.mainRegions_[0]) {
-		p += p;
-		PXCPoint3DF32 ppp = vertices_[p.y * 640 + p.x];
-		ofs << ppp.x*scale << " " << ppp.y*scale << " " << ppp.z*scale << endl;
-		//obj_cloud.push_back(vertices[p.y * 640 + p.x]);
-	}
-	ofs.close();
-	return 0;
-}
-
+//Drive Dobot work
 int VideoDriver::dobotCTRL()
 {
 	// Define variable
@@ -204,11 +173,11 @@ int VideoDriver::dobotCTRL()
 	pxcsm->EnableStream(PXCCapture::STREAM_TYPE_DEPTH, camera_.width, camera_.height, fps_);
 	pxcsm->Init();
 	pxcdev = pxcsm->QueryCaptureManager()->QueryDevice();
-	pxcdev->SetDepthConfidenceThreshold(4);
 	if (!pxcdev) {
 		MESSAGE_COUT("ERROR", "Failed to create an SDK SenseManager");
 		return -1;
 	}
+	pxcdev->SetDepthConfidenceThreshold(4);
 	projection = pxcdev->CreateProjection();
 	if (!projection) {
 		MESSAGE_COUT("ERROR", "Failed to create an SDK Projection");
@@ -269,7 +238,7 @@ int VideoDriver::dobotCTRL()
 			// judge 
 			int key = waitKey(1);
 			if (key == ' '){
-				corners = FindChessBoardCorners(color, depth, pattern);
+				corners = findChessBoardCorners(color, depth, pattern);
 				if (corners.size() >= 9) {
 					Mat src, dst;
 					for (int index = 0; index < 9; index++){
