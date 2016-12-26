@@ -137,7 +137,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\IDLER\Documents\Visual Studio 2013\Projects\ChessBoard\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\IDLER\Documents\GitHub\ChessBoard\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -148,7 +148,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Common.hpp" />
-    <ClInclude Include="..\include\Dataset.hpp" />
+    <ClInclude Include="..\include\VideoDriver.hpp" />
     <ClInclude Include="..\include\DrawWorld.hpp" />
     <ClInclude Include="..\include\FileOperation.hpp" />
     <ClInclude Include="..\include\HOG-SVM.hpp" />
@@ -160,13 +160,11 @@
     <ClInclude Include="..\src\Socket.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\Dataset.cpp" />
-    <ClCompile Include="..\src\DrawWorld.cpp" />
+    <ClCompile Include="..\src\VideoDriver.cpp" />
     <ClCompile Include="..\src\FileOperation.cpp" />
     <ClCompile Include="..\src\HOG-SVM.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\Segmentation.cpp" />
-    <ClCompile Include="..\src\World.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

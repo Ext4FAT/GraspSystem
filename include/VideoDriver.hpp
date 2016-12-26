@@ -3,10 +3,10 @@
 #include "FileOperation.hpp"
 #include "Segmentation.hpp"
 
-class Dataset: public FileOperation
+class VideoDriver: public FileOperation
 {
 public:
-	Dataset(const string& Dir, int width, int height, float fps = 60);
+	VideoDriver(const string& Dir, int width, int height, float fps = 60);
 	int dataAcquire();
 	Mat PXCImage2Mat(PXCImage* pxc);
 
@@ -27,7 +27,7 @@ public:
 	inline int saveDepth();
 	int saveRegions(vector<Rect> Boxes);
 	//analysis from files
-	//int Dataset::readSourceFromFile();
+	//int VideoDriver::readSourceFromFile();
 private:
 	string dir_;
 	string depthDir_;
@@ -41,19 +41,19 @@ private:
 };
 
 
-inline string Dataset::getSavePath(const string &dirPrefix, time_t slot, long framecnt)
+inline string VideoDriver::getSavePath(const string &dirPrefix, time_t slot, long framecnt)
 {
 	std::stringstream ss;
 	ss << dirPrefix << "\\" << getSaveDirName(slot) << getSaveFileName(slot, framecnt);
 	return ss.str();
 }
 
-inline string Dataset::getSaveFileName(time_t slot, long framecnt)
+inline string VideoDriver::getSaveFileName(time_t slot, long framecnt)
 {
 	return to_string(slot) + "-" + to_string(framecnt) +".png";
 }
 
-inline string Dataset::getSaveDirName(time_t slot)
+inline string VideoDriver::getSaveDirName(time_t slot)
 {
 	string res = "";
 	tm time_slot;

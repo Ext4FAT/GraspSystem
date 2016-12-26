@@ -1,4 +1,4 @@
-#include "Dataset.hpp"
+#include "VideoDriver.hpp"
 #include "DrawWorld.hpp"
 #include "Macro.hpp"
 #include "Opencv.hpp"
@@ -129,7 +129,7 @@ void placeWindows(int topk)
 }
 
 //Dir example: "..\\saveData\\"
-Dataset::Dataset(const string& Dir, int width, int height, float fps /*= 60*/) :
+VideoDriver::VideoDriver(const string& Dir, int width, int height, float fps /*= 60*/) :
 dir_(Dir), depthDir_(Dir + "depth\\"), colorDir_(Dir + "color\\"), pcdDir_(Dir + "pcd\\"), fps_(fps)
 {
 	camera_.width = width;
@@ -137,7 +137,7 @@ dir_(Dir), depthDir_(Dir + "depth\\"), colorDir_(Dir + "color\\"), pcdDir_(Dir +
 }
 
 //Convert RealSense's PXCImage to Opencv's Mat
-Mat Dataset::PXCImage2Mat(PXCImage* pxc)
+Mat VideoDriver::PXCImage2Mat(PXCImage* pxc)
 {
 	if (!pxc)	return Mat(0, 0, 0);
 	PXCImage::ImageInfo info = pxc->QueryInfo();
@@ -158,7 +158,7 @@ Mat Dataset::PXCImage2Mat(PXCImage* pxc)
 }
 
 //Save PXC Point Cloud to PCD file
-int Dataset::savePCD(const string& outfilename, Segmentation &myseg)
+int VideoDriver::savePCD(const string& outfilename, Segmentation &myseg)
 {
 	ofstream ofs(outfilename);
 	ofs << "# .PCD v0.7 - Point Cloud Data file format" << endl;
@@ -185,7 +185,7 @@ int Dataset::savePCD(const string& outfilename, Segmentation &myseg)
 	return 0;
 }
 
-int Dataset::dataAcquire()
+int VideoDriver::dataAcquire()
 {
 	// Define variable
 	Mat color, depth, display, color2, depth2;
@@ -357,7 +357,7 @@ int Dataset::dataAcquire()
 
 
 
-int Dataset::show()
+int VideoDriver::show()
 {
 	/************************************************************************/
 	/* Define variable                                                      */
@@ -537,7 +537,7 @@ int Dataset::show()
 	return 1;
 }
 
-int Dataset::testSVM(string dir) 
+int VideoDriver::testSVM(string dir) 
 {
 	Size showSize = { camera_.width / 2, camera_.height / 2 };
 	//Configure Segmentation
@@ -606,7 +606,7 @@ int Dataset::testSVM(string dir)
 }
 
 
-int Dataset::testRegion(string dir = ".\\dataset")
+int VideoDriver::testRegion(string dir = ".\\dataset")
 {
 	//Configure HOG-SVM
 	HOG_SVM hog_svm(".\\classification\\HOG-SVM-MODEL.xml");

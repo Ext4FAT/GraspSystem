@@ -18,9 +18,6 @@
     <ClInclude Include="..\include\Common.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\Dataset.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\DrawWorld.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -48,14 +45,11 @@
     <ClInclude Include="..\src\Socket.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\VideoDriver.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\Dataset.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\DrawWorld.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\FileOperation.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -68,7 +62,7 @@
     <ClCompile Include="..\src\Segmentation.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\World.cpp">
+    <ClCompile Include="..\src\VideoDriver.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
