@@ -196,6 +196,9 @@ int VideoDriver::dobotCTRL()
 					calibrated = true;
  				}
 			}
+			else if (key == 'g'){
+				MySend("grasp");
+			}
 			else if (key == 'h'){
 				MySend("home");
 			}
