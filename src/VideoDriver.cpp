@@ -123,6 +123,8 @@ int VideoDriver::dobotCTRL()
 	Size segSize = { 320, 240 };
 	Segmentation myseg(segSize, topk, threshold);
 	// Mouse Click to select point
+	bool enableLocalization = false;
+	Point grasppoint;
 	Point preClick = { -1, -1 };
 	Point click = { 0, 0 };
 	cv::namedWindow("color");
@@ -139,7 +141,7 @@ int VideoDriver::dobotCTRL()
 	// Calibration Flag
 	bool calibrated = false;
 	// Detect each video frame
-	for (framecnt = 1; true; ++framecnt) {
+	for (framecnt = 1; true; ++framecnt, grasppoint = { 0, 0 }) {
 		if (pxcsm->AcquireFrame(true) < PXC_STATUS_NO_ERROR)	break;
 		// Query the realsense color and depth, and project depth to color
 		try{
@@ -160,12 +162,24 @@ int VideoDriver::dobotCTRL()
 			color = PXCImage2Mat(pxccolor);
 			if (!depth.cols || !color.cols)	continue;
 
-			//// resize
-			//resize(depth, depth2, segSize);
-			//resize(color, color2, segSize);
-			//// segement
-			//myseg.Segment(depth2, color2);
-
+			// resize
+			resize(depth, depth2, segSize);
+			resize(color, color2, segSize);
+			// segement
+			if (framecnt % 15 == 0) {
+				myseg.Segment(depth2, color2);
+				for (auto r : myseg.boundBoxes_){
+					if (1.0*r.width / r.height < 2){
+						Rect tmp(r.x * 2, r.y * 2, r.width * 2, r.height * 2);
+						rectangle(color, tmp, Scalar(255, 255, 255), 2);
+						Point bottom_mid = (tmp.br() + tmp.tl()) / 2;
+						bottom_mid.y += tmp.height / 2;
+						cv::circle(color, bottom_mid, 3, Scalar(0, 0, 255), 5);
+						grasppoint = bottom_mid;
+					}
+				}
+			}
+			
 			// judge 
 			int key = waitKey(1);
 			if (key == ' '){
@@ -211,6 +225,10 @@ int VideoDriver::dobotCTRL()
 			else if (key == 'j'){
 				MySend("down");
 			}
+			else if (key == 'e'){
+				enableLocalization = !enableLocalization;
+				MESSAGE_COUT((enableLocalization ? "Open" : "Close"), "Automatic");
+			}
 			else if (key == 27){
 				break;
 			} 
@@ -231,6 +249,21 @@ int VideoDriver::dobotCTRL()
 				}
 			}
 
+			if (enableLocalization && calibrated && depth.at<float>(grasppoint)) {
+				if (grasppoint.x > camera_.width || grasppoint.y > camera_.height)
+					break;
+				Mat tmp = Mat::ones(1, 4, CV_32FC1);
+				PXCPoint3DF32 v = vertices[grasppoint.y * camera_.width + grasppoint.x];
+				tmp.at<float>(0, 0) = v.x;
+				tmp.at<float>(0, 1) = v.y;
+				tmp.at<float>(0, 2) = v.z;
+				Mat res = trans*tmp.t();
+				string buf = to_string(res.at<float>(0, 0)) + " " +
+					to_string(res.at<float>(1, 0)) + " " +
+					to_string(res.at<float>(2, 0)) + "\n";
+				MESSAGE_COUT("Send Msg", buf);
+				MySend(buf);
+			}
 
 			//draw click point
 			cv::circle(color, click, 3, Scalar(255, 0, 0), 5);

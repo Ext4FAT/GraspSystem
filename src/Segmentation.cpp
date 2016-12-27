@@ -49,25 +49,20 @@ void Segmentation::Segment(Mat& depth, Mat& color)
 		}
 	sort(mainRegions_.begin(), mainRegions_.end(),
 		[](const vector<Point>& v1, const vector<Point>& v2){return v1.size() > v2.size(); });
-	//show segmentation before and after
-	Mat pre = Mat::zeros(depth.size(), CV_8UC3);
-	draw(mainRegions_, pre, colors_);
-	imshow("before merging", pre);
-
-	regionMerge(depth, mainRegions_, blackRegions_, topk_, 1);
-
-	Mat disp = Mat::zeros(depth.size(), CV_8UC3);
-	draw(mainRegions_, disp, colors_);
-	imshow("segmentation", disp);
-
-
-	calculateConvexHulls();
-	calculateBoundBoxex();
-
+	//just select top-k
+	mainRegions_.resize(topk_);
 	//show boundbox
 	Mat regions = color.clone();
-	calculateConvexHulls();
-	calculateBoundBoxex();
+	for (auto mr : mainRegions_) {
+		Point pmax = { 0, 0 }, pmin = { 0xfff, 0xfff };
+		for (auto p : mr){
+			if (p.x > pmax.x) pmax.x = p.x;
+			if (p.y > pmax.y) pmax.y = p.y;
+			if (p.x < pmin.x) pmin.x = p.x;
+			if (p.y < pmax.y) pmin.y = p.y;
+		}
+		boundBoxes_.push_back(Rect(pmin, pmax));
+	}
 	for (auto rect : boundBoxes_)
 		rectangle(regions, rect, Scalar(255, 255, 255), 2);
 	imshow("regions", regions);
