@@ -109,7 +109,7 @@ int VideoDriver::acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF
 Mat VideoDriver::calibrationR2D(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud)
 {
 	Mat trans = Mat::eye(4, 4, CV_32FC1);
-	corners_ = findChessBoardCorners(color, depth, pattern);
+ 	corners_ = findChessBoardCorners(color, depth, pattern_);
 	if (corners_.size() >= 9) {
 		Mat src, dst;
 		for (int index = 0; index < 9; index++){
@@ -169,6 +169,7 @@ int VideoDriver::commandParse(int key)
 			return 0;
 			break;
 	}
+	return 1;
 }
 
 // Locate windows position
@@ -238,8 +239,6 @@ int VideoDriver::dobotCTRL()
 	//vector<Point2f> corners;
 	calArmCoordinate(origin, side);
 	Mat trans = Mat::eye(4, 4, CV_32FC1);
-	// Calibration Flag
-	bool calibrated = false;
 	// Detect each video frame
 	for (framecnt = 1; true; ++framecnt) {
 		if (pxcsm_->AcquireFrame(true) < PXC_STATUS_NO_ERROR)	break;
@@ -260,15 +259,17 @@ int VideoDriver::dobotCTRL()
 					bottom_mid.y += tmp.height / 2;
 					//cv::circle(color, bottom_mid, 3, Scalar(0, 0, 255), 5);
 					grasppoint = bottom_mid;
+					break;
 				}
 			}
 		}			
 		// Commands
 		int key = waitKey(1);
 		if (key == ' '){
+			cout << key << endl;
 			trans = calibrationR2D(color, depth, pointscloud);
 			if (corners_.size() >= 9){
-				cv::drawChessboardCorners(color, pattern, corners_, true);
+				cv::drawChessboardCorners(color, pattern_, corners_, true);
 				drawCornerText(color, depth, corners_);
 			}
 		}
@@ -280,14 +281,14 @@ int VideoDriver::dobotCTRL()
 		// Point Send
 		if (preClick != click){
 			preClick = click;
-			if (calibrated && depth.at<float>(click)) {
+			if (calibrated_ && depth.at<float>(click)) {
 				PXCPoint3DF32 v = pointscloud[click.y * camera_.width + click.x];
 				string buf = convert(v, trans);
 				MESSAGE_COUT("Send Msg", buf);
 				MySend(buf);
 			}
 		}
-		if (autoLocalization_ && calibrated && depth.at<float>(grasppoint)) {
+		if (autoLocalization_ && calibrated_ && depth.at<float>(grasppoint)) {
 			if (grasppoint.x > camera_.width || grasppoint.y > camera_.height)
 				break;
 			PXCPoint3DF32 v = pointscloud[grasppoint.y * camera_.width + grasppoint.x];
@@ -297,8 +298,8 @@ int VideoDriver::dobotCTRL()
 		}
 		//draw click point
 		cv::circle(color, grasppoint, 3, Scalar(0, 0, 255), 5);
-		//cv::circle(color, click, 3, Scalar(255, 0, 0), 5);
-		//cv::circle(depth, click, 3, Scalar(5000), 5);
+		cv::circle(color, click, 3, Scalar(255, 0, 0), 5);
+		cv::circle(depth, click, 3, Scalar(5000), 5);
 		imshow("depth", 65535 / 1200 * depth);
 		imshow("color", color);
 		// Clear Segmentation data; 
@@ -341,6 +342,10 @@ vector<Point2f> VideoDriver::findChessBoardCorners(Mat &color, Mat &depth, Size 
 	Mat gray;
 	cv::cvtColor(color, gray, cv::COLOR_BGR2GRAY);
 	bool found = cv::findChessboardCorners(color, pattern, corners);
+	for (auto c : corners){
+		cout << c << endl;
+	}
+	cout << corners.size() << endl;
 	if (corners.size() > 0){
 		cornerSubPix(gray, corners, Size(10, 10), Size(-1, -1), TermCriteria(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 500, 0.003));
 		cv::drawChessboardCorners(color, pattern, corners, found);

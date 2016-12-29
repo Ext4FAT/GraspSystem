@@ -33,7 +33,7 @@ private:
 	PointsCloud dw_;
 	// ChessBoard
 	bool calibrated_ = false;
-	Size pattern = { 3, 3 };
+	Size pattern_ = { 3, 3 };
 	vector<Point2f> corners_;
 	vector<PXCPoint3DF32> corresponding_;
 	PXCPoint3DF32 origin_;
