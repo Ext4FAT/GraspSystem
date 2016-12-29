@@ -5,21 +5,23 @@
 
 #define MAXBYTE 0xff
 
-class DrawWorld{
+class PointsCloud{
 private:
 	PXCSession* session;
 	PXCImage *drawVertices;
 	std::vector<PXCPoint3DF32> vertices;
 	PXCSizeI32 depthSize;
-
-public:	
-	DrawWorld(PXCSession* s, PXCSizeI32 user_size)
+	PXCPoint3DF32 light;
+public:
+	PointsCloud(){}//Potential Danger !!!!!!
+	PointsCloud(PXCSession* s, PXCSizeI32 user_size, PXCPoint3DF32 l = { .5, .5, 1.0 })
 	{
 		session = s;
 		depthSize = user_size;
+		light = l;
 		init();
 	}
-	~DrawWorld()
+	~PointsCloud()
 	{
 		session->Release();
 		drawVertices->Release();
@@ -62,7 +64,7 @@ private:
 		return r;
 	}
 public:
-	PXCImage* DepthToWorldByQueryVertices(std::vector<PXCPoint3DF32>& vertices, PXCImage *depth, PXCPoint3DF32 light)
+	PXCImage* DepthToWorldByQueryVertices(std::vector<PXCPoint3DF32>& vertices, PXCImage *depth)
 	{
 		if (!drawVertices)	return 0;
 		PXCImage::ImageInfo drawVerticesInfo = drawVertices->QueryInfo();
@@ -118,7 +120,7 @@ public:
 		drawVertices->ReleaseAccess(&drawVerticesDat);
 		return drawVertices;
 	}
-	PXCImage* SegmentationWorld(std::vector<PXCPoint3DF32>& vertices, PXCImage *depth, PXCPoint3DF32 light, std::vector<cv::Point> seg)
+	PXCImage* SegmentationWorld(std::vector<PXCPoint3DF32>& vertices, PXCImage *depth, std::vector<cv::Point> seg)
 	{
 		if (!drawVertices)	return 0;
 		PXCImage::ImageInfo drawVerticesInfo = drawVertices->QueryInfo();

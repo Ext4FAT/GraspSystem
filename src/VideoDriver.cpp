@@ -1,8 +1,6 @@
 #include "VideoDriver.hpp"
-#include "DrawWorld.hpp"
 #include "Macro.hpp"
 #include "Opencv.hpp"
-#include "Realsense.hpp"
 #include "HOG-SVM.hpp"
 #include "Socket.hpp"
 //thread
@@ -61,6 +59,54 @@ VideoDriver::VideoDriver(int width, int height, float fps)
 	fps_ = fps;
 }
 
+//Configure Realsense parameters
+int VideoDriver::configureRealsense()
+{
+	//Configure RealSense
+	pxcsession_ = PXCSession::CreateInstance();
+	pxcsm_ = pxcsession_->CreateSenseManager();
+	pxcsm_->EnableStream(PXCCapture::STREAM_TYPE_COLOR, camera_.width, camera_.height, fps_);
+	pxcsm_->EnableStream(PXCCapture::STREAM_TYPE_DEPTH, camera_.width, camera_.height, fps_);
+	//Query Information
+	pxcsm_->Init();
+	pxcdev_ = pxcsm_->QueryCaptureManager()->QueryDevice();
+	if (!pxcdev_) {
+		MESSAGE_COUT("ERROR", "Failed to create an SDK SenseManager");
+		return -1;
+	}
+	projection_ = pxcdev_->CreateProjection();
+	if (!projection_) {
+		MESSAGE_COUT("ERROR", "Failed to create an SDK Projection");
+		return -2;
+	}
+	//Configure Pointscloud
+	dw_ = PointsCloud(pxcsession_, camera_);
+	return 0;
+}
+
+//Query Realsense data
+int VideoDriver::acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud)
+{
+	PXCCapture::Sample *sample = 0;
+	PXCImage *pxcdepth, *pxccolor;
+	sample = pxcsm_->QuerySample();
+	pxcdepth = sample->depth;
+	pxccolor = sample->color;
+	pxcdepth = projection_->CreateDepthImageMappedToColor(pxcdepth, pxccolor);
+	depth = PXCImage2Mat(pxcdepth);
+	color = PXCImage2Mat(pxccolor);
+	// Generate and Show 3D Point Cloud
+	pxcStatus sts = projection_->QueryVertices(pxcdepth, &pointscloud[0]);
+	if (sts >= PXC_STATUS_NO_ERROR) {
+		PXCImage* drawVertices = dw_.DepthToWorldByQueryVertices(pointscloud, pxcdepth);
+		if (drawVertices){
+			Mat display = PXCImage2Mat(drawVertices);
+			imshow("display", display);
+		}
+	}
+	return 0;
+}
+
 
 // Locate windows position
 void VideoDriver::placeWindows(int topk)
@@ -89,34 +135,14 @@ int VideoDriver::dobotCTRL()
 {
 	// Define variable
 	Mat color, depth, display, color2, depth2;
-	vector<PXCPoint3DF32> vertices(camera_.height*camera_.width);
-	PXCSession *pxcsession;
-	PXCSenseManager *pxcsm;
-	PXCCapture::Device *pxcdev;
-	PXCProjection *projection;
+	vector<PXCPoint3DF32> pointscloud(camera_.height*camera_.width);
 	PXCCapture::Sample *sample;
 	PXCImage *pxcdepth,*pxccolor;
 	long framecnt;
 	// Configure RealSense
-	pxcsession = PXCSession::CreateInstance();
-	pxcsm = pxcsession->CreateSenseManager();
-	pxcsm->EnableStream(PXCCapture::STREAM_TYPE_COLOR, camera_.width, camera_.height, fps_);
-	pxcsm->EnableStream(PXCCapture::STREAM_TYPE_DEPTH, camera_.width, camera_.height, fps_);
-	pxcsm->Init();
-	pxcdev = pxcsm->QueryCaptureManager()->QueryDevice();
-	if (!pxcdev) {
-		MESSAGE_COUT("ERROR", "Failed to create an SDK SenseManager");
-		return -1;
-	}
-	pxcdev->SetDepthConfidenceThreshold(4);
-	projection = pxcdev->CreateProjection();
-	if (!projection) {
-		MESSAGE_COUT("ERROR", "Failed to create an SDK Projection");
-		return -2;
-	}
+	configureRealsense();
 	// Configure Point Cloud Show
-	DrawWorld dw(pxcsession, camera_);
-	PXCPoint3DF32 light = { .5, .5, 1.0 };
+	PointsCloud dw(pxcsession_, camera_);
 	// Configure Segmentation
 	unsigned topk = 5;
 	short threshold = 2;
@@ -142,26 +168,11 @@ int VideoDriver::dobotCTRL()
 	bool calibrated = false;
 	// Detect each video frame
 	for (framecnt = 1; true; ++framecnt, grasppoint = { 0, 0 }) {
-		if (pxcsm->AcquireFrame(true) < PXC_STATUS_NO_ERROR)	break;
+		if (pxcsm_->AcquireFrame(true) < PXC_STATUS_NO_ERROR)	break;
 		// Query the realsense color and depth, and project depth to color
 		try{
-			sample = pxcsm->QuerySample();
-			pxcdepth = sample->depth;
-			pxccolor = sample->color;
-			pxcdepth = projection->CreateDepthImageMappedToColor(pxcdepth, pxccolor);
-			// Generate and Show 3D Point Cloud
-			pxcStatus sts = projection->QueryVertices(pxcdepth, &vertices[0]);
-			if (sts >= PXC_STATUS_NO_ERROR) {
-				PXCImage* drawVertices = dw.DepthToWorldByQueryVertices(vertices, pxcdepth, light);
-				if (drawVertices){
-					Mat display = PXCImage2Mat(drawVertices);
-					imshow("display", display);
-				}
-			}
-			depth = PXCImage2Mat(pxcdepth);
-			color = PXCImage2Mat(pxccolor);
+			acquireRealsenseData(color, depth, pointscloud);
 			if (!depth.cols || !color.cols)	continue;
-
 			// resize
 			resize(depth, depth2, segSize);
 			resize(color, color2, segSize);
@@ -189,7 +200,7 @@ int VideoDriver::dobotCTRL()
 					for (int index = 0; index < 9; index++){
 						Point2f c = corners[index];
 						if (depth.at<short>(c)){
- 							PXCPoint3DF32 v = vertices[(int)c.y * camera_.width + (int)c.x];
+ 							PXCPoint3DF32 v = pointscloud[(int)c.y * camera_.width + (int)c.x];
 							Mat tmp = Mat::ones(1, 4, CV_32FC1);
 							tmp.at<float>(0, 0) = v.x;
 							tmp.at<float>(0, 1) = v.y;
@@ -236,7 +247,7 @@ int VideoDriver::dobotCTRL()
 				preClick = click;
 				if (calibrated && depth.at<float>(click)) {
 					Mat tmp = Mat::ones(1, 4, CV_32FC1);
-					PXCPoint3DF32 v = vertices[click.y * camera_.width + click.x];
+					PXCPoint3DF32 v = pointscloud[click.y * camera_.width + click.x];
 					tmp.at<float>(0, 0) = v.x;
 					tmp.at<float>(0, 1) = v.y;
 					tmp.at<float>(0, 2) = v.z;
@@ -253,7 +264,7 @@ int VideoDriver::dobotCTRL()
 				if (grasppoint.x > camera_.width || grasppoint.y > camera_.height)
 					break;
 				Mat tmp = Mat::ones(1, 4, CV_32FC1);
-				PXCPoint3DF32 v = vertices[grasppoint.y * camera_.width + grasppoint.x];
+				PXCPoint3DF32 v = pointscloud[grasppoint.y * camera_.width + grasppoint.x];
 				tmp.at<float>(0, 0) = v.x;
 				tmp.at<float>(0, 1) = v.y;
 				tmp.at<float>(0, 2) = v.z;
@@ -279,7 +290,7 @@ int VideoDriver::dobotCTRL()
 			myseg.clear();
 			// Release Realsense SDK memory and read next frame 
 			pxcdepth->Release();
-			pxcsm->ReleaseFrame();
+			pxcsm_->ReleaseFrame();
 
 		}
 		catch (cv::Exception e){
