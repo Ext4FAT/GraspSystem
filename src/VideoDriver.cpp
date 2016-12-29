@@ -105,6 +105,40 @@ int VideoDriver::acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF
 	return 0;
 }
 
+// Estimate Realsense to Dobot Transformation Matrix
+Mat VideoDriver::calibrationR2D(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud)
+{
+	Mat trans = Mat::eye(4, 4, CV_32FC1);
+	corners_ = findChessBoardCorners(color, depth, pattern);
+	if (corners_.size() >= 9) {
+		Mat src, dst;
+		for (int index = 0; index < 9; index++){
+			Point2f c = corners_[index];
+			if (depth.at<short>(c)){
+				PXCPoint3DF32 v = pointscloud[(int)c.y * camera_.width + (int)c.x];
+				Mat tmp = Mat::ones(1, 4, CV_32FC1);
+				tmp.at<float>(0, 0) = v.x;
+				tmp.at<float>(0, 1) = v.y;
+				tmp.at<float>(0, 2) = v.z;
+				src.push_back(tmp);
+				Mat tmp2 = Mat::ones(1, 4, CV_32FC1);
+				PXCPoint3DF32 cor = corresponding_[index];
+				tmp2.at<float>(0, 0) = cor.x;
+				tmp2.at<float>(0, 1) = cor.y;
+				tmp2.at<float>(0, 2) = cor.z;
+				dst.push_back(tmp2);
+			}
+			//cout << "[" << c.x << ", " << c.y << "]\t" << "(" << v.x << "," << v.y << "," << v.z << "]" << endl;
+		}
+		trans = dst.t()*src.t().inv(cv::DECOMP_SVD);
+		MESSAGE_COUT("Transformation Matrix", "");
+		cout << trans << endl;
+		calibrated_ = true;
+	}
+	return trans;
+}
+
+
 // Parse commond and  execute
 int VideoDriver::commandParse(int key)
 {
@@ -158,6 +192,19 @@ void VideoDriver::placeWindows(int topk)
 	}
 }
 
+string convert(PXCPoint3DF32 v, Mat &trans)
+{
+	Mat tmp = Mat::ones(1, 4, CV_32FC1);
+	tmp.at<float>(0, 0) = v.x;
+	tmp.at<float>(0, 1) = v.y;
+	tmp.at<float>(0, 2) = v.z;
+	Mat res = trans*tmp.t();
+	string buf = to_string(res.at<float>(0, 0)) + " " +
+		to_string(res.at<float>(1, 0)) + " " +
+		to_string(res.at<float>(2, 0)) + "\n";
+	return buf;
+}
+
 
 //Drive Dobot work
 int VideoDriver::dobotCTRL()
@@ -187,8 +234,8 @@ int VideoDriver::dobotCTRL()
 	// Transformation Matrix
 	PXCPoint3DF32 origin = { 143.8221f, 4.8719f, -21.0000f };
 	float side = 71.0f;
-	Size pattern = { 3, 3 };
-	vector<Point2f> corners;
+	//Size pattern = { 3, 3 };
+	//vector<Point2f> corners;
 	calArmCoordinate(origin, side);
 	Mat trans = Mat::eye(4, 4, CV_32FC1);
 	// Calibration Flag
@@ -216,88 +263,46 @@ int VideoDriver::dobotCTRL()
 				}
 			}
 		}			
-		// Commonds
+		// Commands
 		int key = waitKey(1);
 		if (key == ' '){
-			corners = findChessBoardCorners(color, depth, pattern);
-			if (corners.size() >= 9) {
-				Mat src, dst;
-				for (int index = 0; index < 9; index++){
-					Point2f c = corners[index];
-					if (depth.at<short>(c)){
- 						PXCPoint3DF32 v = pointscloud[(int)c.y * camera_.width + (int)c.x];
-						Mat tmp = Mat::ones(1, 4, CV_32FC1);
-						tmp.at<float>(0, 0) = v.x;
-						tmp.at<float>(0, 1) = v.y;
-						tmp.at<float>(0, 2) = v.z;
-						src.push_back(tmp);
-						Mat tmp2 = Mat::ones(1, 4, CV_32FC1);
-						PXCPoint3DF32 cor = corresponding_[index];
-						tmp2.at<float>(0, 0) = cor.x;
-						tmp2.at<float>(0, 1) = cor.y;
-						tmp2.at<float>(0, 2) = cor.z;
-						dst.push_back(tmp2);
-					}
-					//cout << "[" << c.x << ", " << c.y << "]\t" << "(" << v.x << "," << v.y << "," << v.z << "]" << endl;
-				}
-				trans = dst.t()*src.t().inv(cv::DECOMP_SVD);
-				MESSAGE_COUT("Transformation Matrix", "");
-				cout << trans << endl;	
-				calibrated = true;
- 			}
+			trans = calibrationR2D(color, depth, pointscloud);
+			if (corners_.size() >= 9){
+				cv::drawChessboardCorners(color, pattern, corners_, true);
+				drawCornerText(color, depth, corners_);
+			}
 		}
 		else {
 			int ret = commandParse(key);
 			if (!ret)
 				break;
 		}
+		// Point Send
 		if (preClick != click){
 			preClick = click;
 			if (calibrated && depth.at<float>(click)) {
-				Mat tmp = Mat::ones(1, 4, CV_32FC1);
 				PXCPoint3DF32 v = pointscloud[click.y * camera_.width + click.x];
-				tmp.at<float>(0, 0) = v.x;
-				tmp.at<float>(0, 1) = v.y;
-				tmp.at<float>(0, 2) = v.z;
-				Mat res = trans*tmp.t();
-				string buf =	to_string(res.at<float>(0, 0)) + " " +
-								to_string(res.at<float>(1, 0)) + " " +
-								to_string(res.at<float>(2, 0)) + "\n";
+				string buf = convert(v, trans);
 				MESSAGE_COUT("Send Msg", buf);
 				MySend(buf);
 			}
 		}
-
 		if (autoLocalization_ && calibrated && depth.at<float>(grasppoint)) {
 			if (grasppoint.x > camera_.width || grasppoint.y > camera_.height)
 				break;
-			Mat tmp = Mat::ones(1, 4, CV_32FC1);
 			PXCPoint3DF32 v = pointscloud[grasppoint.y * camera_.width + grasppoint.x];
-			tmp.at<float>(0, 0) = v.x;
-			tmp.at<float>(0, 1) = v.y;
-			tmp.at<float>(0, 2) = v.z;
-			Mat res = trans*tmp.t();
-			string buf = to_string(res.at<float>(0, 0)) + " " +
-				to_string(res.at<float>(1, 0)) + " " +
-				to_string(res.at<float>(2, 0)) + "\n";
+			string buf = convert(v, trans);
 			MESSAGE_COUT("Send Msg", buf);
 			MySend(buf);
 		}
-
 		//draw click point
 		cv::circle(color, click, 3, Scalar(255, 0, 0), 5);
 		cv::circle(depth, click, 3, Scalar(5000), 5);
-		// show
-		if (corners.size() >= 9){
-			cv::drawChessboardCorners(color, pattern, corners, true);
-			drawCornerText(color, depth, corners);
-		}
 		imshow("depth", 65535 / 1200 * depth);
 		imshow("color", color);
 		// Clear Segmentation data; 
 		myseg.clear();
 		// Release Realsense SDK memory and read next frame 
-		//pxccolor_->Release();
 		pxcdepth_->Release();
 		pxcsm_->ReleaseFrame();
 	}

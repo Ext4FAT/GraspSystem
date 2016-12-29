@@ -17,6 +17,7 @@ private:
 	int commandParse(int key);
 	void placeWindows(int topk);
 	Mat PXCImage2Mat(PXCImage* pxc);
+	Mat calibrationR2D(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud);
 	vector<Point2f> findChessBoardCorners(Mat &color, Mat &depth, Size pattern = { 3, 3 });
 	void calArmCoordinate(PXCPoint3DF32 origin, float side);
 private:
@@ -31,6 +32,9 @@ private:
 	pxcF32 fps_;
 	PointsCloud dw_;
 	// ChessBoard
+	bool calibrated_ = false;
+	Size pattern = { 3, 3 };
+	vector<Point2f> corners_;
 	vector<PXCPoint3DF32> corresponding_;
 	PXCPoint3DF32 origin_;
 	float side_;
