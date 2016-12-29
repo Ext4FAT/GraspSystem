@@ -14,6 +14,7 @@ public:
 	Mat makeChessBoard(int pixels, int count);
 	
 private:
+	int commandParse(int key);
 	void placeWindows(int topk);
 	Mat PXCImage2Mat(PXCImage* pxc);
 	vector<Point2f> findChessBoardCorners(Mat &color, Mat &depth, Size pattern = { 3, 3 });
@@ -33,6 +34,10 @@ private:
 	vector<PXCPoint3DF32> corresponding_;
 	PXCPoint3DF32 origin_;
 	float side_;
+	//Grasp
+	bool autoLocalization_ = false;
+
+
 
 	//HOG_SVM classification_;
 };

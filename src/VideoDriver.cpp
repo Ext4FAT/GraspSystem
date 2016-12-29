@@ -105,6 +105,37 @@ int VideoDriver::acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF
 	return 0;
 }
 
+// Parse commond and  execute
+int VideoDriver::commandParse(int key)
+{
+	// judge 
+	switch (key){
+		case ' ':
+			break;
+		case 'e':
+			autoLocalization_ = !autoLocalization_;
+			MESSAGE_COUT((autoLocalization_ ? "Open" : "Close"), "Automatic");
+			break;
+		case 'g':
+			MySend("grasp");
+			break;
+		case 'h':
+			MySend("home");
+			break;
+		case 'j':
+			MySend("down");
+			break;	
+		case 'k':
+			MySend("up");
+			break;
+		case 'q':
+			MySend("quit"); //Quit server
+			break;
+		case 27:	//ESC
+			return 0;
+			break;
+	}
+}
 
 // Locate windows position
 void VideoDriver::placeWindows(int topk)
@@ -146,7 +177,6 @@ int VideoDriver::dobotCTRL()
 	Size segSize = { 320, 240 };
 	Segmentation myseg(segSize, topk, threshold);
 	// Mouse Click to select point
-	bool enableLocalization = false;
 	Point grasppoint;
 	Point preClick = { -1, -1 };
 	Point click = { 0, 0 };
@@ -166,134 +196,110 @@ int VideoDriver::dobotCTRL()
 	// Detect each video frame
 	for (framecnt = 1; true; ++framecnt, grasppoint = { 0, 0 }) {
 		if (pxcsm_->AcquireFrame(true) < PXC_STATUS_NO_ERROR)	break;
-		//try{
-			// Query the realsense color and depth, and pointscloud
-			acquireRealsenseData(color, depth, pointscloud);
-			if (!depth.cols || !color.cols)	continue;
-			// resize
-			resize(depth, depth2, segSize);
-			resize(color, color2, segSize);
-			// segement
-			if (framecnt % 15 == 0) {
-				myseg.Segment(depth2, color2);
-				for (auto r : myseg.boundBoxes_){
-					if (1.0*r.width / r.height < 2){
-						Rect tmp(r.x * 2, r.y * 2, r.width * 2, r.height * 2);
-						rectangle(color, tmp, Scalar(255, 255, 255), 2);
-						Point bottom_mid = (tmp.br() + tmp.tl()) / 2;
-						bottom_mid.y += tmp.height / 2;
-						cv::circle(color, bottom_mid, 3, Scalar(0, 0, 255), 5);
-						grasppoint = bottom_mid;
-					}
+		//// Query the realsense color and depth, and pointscloud
+		acquireRealsenseData(color, depth, pointscloud);
+		if (!depth.cols || !color.cols)	continue;
+		// resize
+		resize(depth, depth2, segSize);
+		resize(color, color2, segSize);
+		// segement
+		if (framecnt % 15 == 0) {
+			myseg.Segment(depth2, color2);
+			for (auto r : myseg.boundBoxes_){
+				if (1.0*r.width / r.height < 2){
+					Rect tmp(r.x * 2, r.y * 2, r.width * 2, r.height * 2);
+					rectangle(color, tmp, Scalar(255, 255, 255), 2);
+					Point bottom_mid = (tmp.br() + tmp.tl()) / 2;
+					bottom_mid.y += tmp.height / 2;
+					cv::circle(color, bottom_mid, 3, Scalar(0, 0, 255), 5);
+					grasppoint = bottom_mid;
 				}
 			}
-			
-			// judge 
-			int key = waitKey(1);
-			if (key == ' '){
-				corners = findChessBoardCorners(color, depth, pattern);
-				if (corners.size() >= 9) {
-					Mat src, dst;
-					for (int index = 0; index < 9; index++){
-						Point2f c = corners[index];
-						if (depth.at<short>(c)){
- 							PXCPoint3DF32 v = pointscloud[(int)c.y * camera_.width + (int)c.x];
-							Mat tmp = Mat::ones(1, 4, CV_32FC1);
-							tmp.at<float>(0, 0) = v.x;
-							tmp.at<float>(0, 1) = v.y;
-							tmp.at<float>(0, 2) = v.z;
-							src.push_back(tmp);
-							Mat tmp2 = Mat::ones(1, 4, CV_32FC1);
-							PXCPoint3DF32 cor = corresponding_[index];
-							tmp2.at<float>(0, 0) = cor.x;
-							tmp2.at<float>(0, 1) = cor.y;
-							tmp2.at<float>(0, 2) = cor.z;
-							dst.push_back(tmp2);
-						}
-						//cout << "[" << c.x << ", " << c.y << "]\t" << "(" << v.x << "," << v.y << "," << v.z << "]" << endl;
+		}			
+		// Commonds
+		int key = waitKey(1);
+		if (key == ' '){
+			corners = findChessBoardCorners(color, depth, pattern);
+			if (corners.size() >= 9) {
+				Mat src, dst;
+				for (int index = 0; index < 9; index++){
+					Point2f c = corners[index];
+					if (depth.at<short>(c)){
+ 						PXCPoint3DF32 v = pointscloud[(int)c.y * camera_.width + (int)c.x];
+						Mat tmp = Mat::ones(1, 4, CV_32FC1);
+						tmp.at<float>(0, 0) = v.x;
+						tmp.at<float>(0, 1) = v.y;
+						tmp.at<float>(0, 2) = v.z;
+						src.push_back(tmp);
+						Mat tmp2 = Mat::ones(1, 4, CV_32FC1);
+						PXCPoint3DF32 cor = corresponding_[index];
+						tmp2.at<float>(0, 0) = cor.x;
+						tmp2.at<float>(0, 1) = cor.y;
+						tmp2.at<float>(0, 2) = cor.z;
+						dst.push_back(tmp2);
 					}
-					trans = dst.t()*src.t().inv(cv::DECOMP_SVD);
-					MESSAGE_COUT("Transformation Matrix", "");
-					cout << trans << endl;	
-					calibrated = true;
- 				}
-			}
-			else if (key == 'g'){
-				MySend("grasp");
-			}
-			else if (key == 'h'){
-				MySend("home");
-			}
-			else if (key == 'q'){
-				MySend("quit");
-			}
-			else if (key == 'k'){
-				MySend("up");
-			}
-			else if (key == 'j'){
-				MySend("down");
-			}
-			else if (key == 'e'){
-				enableLocalization = !enableLocalization;
-				MESSAGE_COUT((enableLocalization ? "Open" : "Close"), "Automatic");
-			}
-			else if (key == 27){
+					//cout << "[" << c.x << ", " << c.y << "]\t" << "(" << v.x << "," << v.y << "," << v.z << "]" << endl;
+				}
+				trans = dst.t()*src.t().inv(cv::DECOMP_SVD);
+				MESSAGE_COUT("Transformation Matrix", "");
+				cout << trans << endl;	
+				calibrated = true;
+ 			}
+		}
+		else {
+			int ret = commandParse(key);
+			if (!ret)
 				break;
-			} 
-			if (preClick != click){
-				preClick = click;
-				if (calibrated && depth.at<float>(click)) {
-					Mat tmp = Mat::ones(1, 4, CV_32FC1);
-					PXCPoint3DF32 v = pointscloud[click.y * camera_.width + click.x];
-					tmp.at<float>(0, 0) = v.x;
-					tmp.at<float>(0, 1) = v.y;
-					tmp.at<float>(0, 2) = v.z;
-					Mat res = trans*tmp.t();
-					string buf =	to_string(res.at<float>(0, 0)) + " " +
-									to_string(res.at<float>(1, 0)) + " " +
-									to_string(res.at<float>(2, 0)) + "\n";
-					MESSAGE_COUT("Send Msg", buf);
-					MySend(buf);
-				}
-			}
-
-			if (enableLocalization && calibrated && depth.at<float>(grasppoint)) {
-				if (grasppoint.x > camera_.width || grasppoint.y > camera_.height)
-					break;
+		}
+		if (preClick != click){
+			preClick = click;
+			if (calibrated && depth.at<float>(click)) {
 				Mat tmp = Mat::ones(1, 4, CV_32FC1);
-				PXCPoint3DF32 v = pointscloud[grasppoint.y * camera_.width + grasppoint.x];
+				PXCPoint3DF32 v = pointscloud[click.y * camera_.width + click.x];
 				tmp.at<float>(0, 0) = v.x;
 				tmp.at<float>(0, 1) = v.y;
 				tmp.at<float>(0, 2) = v.z;
 				Mat res = trans*tmp.t();
-				string buf = to_string(res.at<float>(0, 0)) + " " +
-					to_string(res.at<float>(1, 0)) + " " +
-					to_string(res.at<float>(2, 0)) + "\n";
+				string buf =	to_string(res.at<float>(0, 0)) + " " +
+								to_string(res.at<float>(1, 0)) + " " +
+								to_string(res.at<float>(2, 0)) + "\n";
 				MESSAGE_COUT("Send Msg", buf);
 				MySend(buf);
 			}
+		}
 
-			//draw click point
-			cv::circle(color, click, 3, Scalar(255, 0, 0), 5);
-			cv::circle(depth, click, 3, Scalar(5000), 5);
-			// show
-			if (corners.size() >= 9){
-				cv::drawChessboardCorners(color, pattern, corners, true);
-				drawCornerText(color, depth, corners);
-			}
-			imshow("depth", 65535 / 1200 * depth);
-			imshow("color", color);
-			// Clear Segmentation data; 
-			myseg.clear();
-			// Release Realsense SDK memory and read next frame 
-			//pxccolor_->Release();
-			pxcdepth_->Release();
-			pxcsm_->ReleaseFrame();
+		if (autoLocalization_ && calibrated && depth.at<float>(grasppoint)) {
+			if (grasppoint.x > camera_.width || grasppoint.y > camera_.height)
+				break;
+			Mat tmp = Mat::ones(1, 4, CV_32FC1);
+			PXCPoint3DF32 v = pointscloud[grasppoint.y * camera_.width + grasppoint.x];
+			tmp.at<float>(0, 0) = v.x;
+			tmp.at<float>(0, 1) = v.y;
+			tmp.at<float>(0, 2) = v.z;
+			Mat res = trans*tmp.t();
+			string buf = to_string(res.at<float>(0, 0)) + " " +
+				to_string(res.at<float>(1, 0)) + " " +
+				to_string(res.at<float>(2, 0)) + "\n";
+			MESSAGE_COUT("Send Msg", buf);
+			MySend(buf);
+		}
 
-		//}
-		//catch (cv::Exception e){
-		//	MESSAGE_COUT("ERROR", e.what());
-		//}
+		//draw click point
+		cv::circle(color, click, 3, Scalar(255, 0, 0), 5);
+		cv::circle(depth, click, 3, Scalar(5000), 5);
+		// show
+		if (corners.size() >= 9){
+			cv::drawChessboardCorners(color, pattern, corners, true);
+			drawCornerText(color, depth, corners);
+		}
+		imshow("depth", 65535 / 1200 * depth);
+		imshow("color", color);
+		// Clear Segmentation data; 
+		myseg.clear();
+		// Release Realsense SDK memory and read next frame 
+		//pxccolor_->Release();
+		pxcdepth_->Release();
+		pxcsm_->ReleaseFrame();
 	}
 	return 1;
 
