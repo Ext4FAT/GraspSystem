@@ -219,7 +219,7 @@ int VideoDriver::dobotCTRL()
 	configureRealsense();
 	PointsCloud dw(pxcsession_, camera_);
 	// Configure Segmentation
-	unsigned topk = 5;
+	unsigned topk = 6;
 	short threshold = 2;
 	Size segSize = { 320, 240 };
 	Segmentation myseg(segSize, topk, threshold);
@@ -241,7 +241,7 @@ int VideoDriver::dobotCTRL()
 	// Calibration Flag
 	bool calibrated = false;
 	// Detect each video frame
-	for (framecnt = 1; true; ++framecnt, grasppoint = { 0, 0 }) {
+	for (framecnt = 1; true; ++framecnt) {
 		if (pxcsm_->AcquireFrame(true) < PXC_STATUS_NO_ERROR)	break;
 		//// Query the realsense color and depth, and pointscloud
 		acquireRealsenseData(color, depth, pointscloud);
@@ -253,12 +253,12 @@ int VideoDriver::dobotCTRL()
 		if (framecnt % 15 == 0) {
 			myseg.Segment(depth2, color2);
 			for (auto r : myseg.boundBoxes_){
-				if (1.0*r.width / r.height < 2){
+				if (r.width / r.height < 2) {
 					Rect tmp(r.x * 2, r.y * 2, r.width * 2, r.height * 2);
-					rectangle(color, tmp, Scalar(255, 255, 255), 2);
+					//rectangle(color, tmp, Scalar(255, 255, 255), 2);
 					Point bottom_mid = (tmp.br() + tmp.tl()) / 2;
 					bottom_mid.y += tmp.height / 2;
-					cv::circle(color, bottom_mid, 3, Scalar(0, 0, 255), 5);
+					//cv::circle(color, bottom_mid, 3, Scalar(0, 0, 255), 5);
 					grasppoint = bottom_mid;
 				}
 			}
@@ -296,8 +296,9 @@ int VideoDriver::dobotCTRL()
 			MySend(buf);
 		}
 		//draw click point
-		cv::circle(color, click, 3, Scalar(255, 0, 0), 5);
-		cv::circle(depth, click, 3, Scalar(5000), 5);
+		cv::circle(color, grasppoint, 3, Scalar(0, 0, 255), 5);
+		//cv::circle(color, click, 3, Scalar(255, 0, 0), 5);
+		//cv::circle(depth, click, 3, Scalar(5000), 5);
 		imshow("depth", 65535 / 1200 * depth);
 		imshow("color", color);
 		// Clear Segmentation data; 
@@ -305,6 +306,7 @@ int VideoDriver::dobotCTRL()
 		// Release Realsense SDK memory and read next frame 
 		pxcdepth_->Release();
 		pxcsm_->ReleaseFrame();
+		//grasppoint = { 0, 0 };
 	}
 	return 1;
 

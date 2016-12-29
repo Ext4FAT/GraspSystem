@@ -49,17 +49,21 @@ void Segmentation::Segment(Mat& depth, Mat& color)
 		}
 	sort(mainRegions_.begin(), mainRegions_.end(),
 		[](const vector<Point>& v1, const vector<Point>& v2){return v1.size() > v2.size(); });
+	Mat disp = Mat::zeros(color.size(), CV_8UC3);
+	draw(mainRegions_, disp, colors_);
+	imshow("seg", disp);
 	//just select top-k
 	mainRegions_.resize(topk_);
 	//show boundbox
 	Mat regions = color.clone();
 	for (auto mr : mainRegions_) {
+		//boundBoxes_.push_back(cv::minAreaRect(mr).boundingRect());
 		Point pmax = { 0, 0 }, pmin = { 0xfff, 0xfff };
 		for (auto p : mr){
 			if (p.x > pmax.x) pmax.x = p.x;
 			if (p.y > pmax.y) pmax.y = p.y;
 			if (p.x < pmin.x) pmin.x = p.x;
-			if (p.y < pmax.y) pmin.y = p.y;
+			if (p.y < pmin.y) pmin.y = p.y;
 		}
 		boundBoxes_.push_back(Rect(pmin, pmax));
 	}
@@ -236,10 +240,10 @@ void Segmentation::draw(SegmentSet &segment, Mat &disp, vector<Vec3b> &colors)
 		//imshow("disp", disp);
 		for (auto p : seg)
 			disp.at<Vec3b>(p) = colors[count];
-		count++;
+		if (++count >= topk_)
+			break;
 		//waitKey(-1);
 	}
-
 }
 
 void Segmentation::drawBlack(SegmentSet &blackRegions, Mat &disp, Vec3b &color)
