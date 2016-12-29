@@ -24,11 +24,11 @@ private:
 	PXCSenseManager *pxcsm_ = 0;
 	PXCCapture::Device *pxcdev_ = 0;
 	PXCProjection *projection_ = 0;
+	PXCCapture::Sample *sample_ = 0;
+	PXCImage *pxcdepth_ = 0 , *pxccolor_ = 0;
 	PXCSizeI32 camera_;
 	pxcF32 fps_;
 	PointsCloud dw_;
-	// 
-	vector<PXCPoint3DF32> vertices_;
 	// ChessBoard
 	vector<PXCPoint3DF32> corresponding_;
 	PXCPoint3DF32 origin_;

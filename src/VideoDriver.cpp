@@ -87,18 +87,16 @@ int VideoDriver::configureRealsense()
 //Query Realsense data
 int VideoDriver::acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud)
 {
-	PXCCapture::Sample *sample = 0;
-	PXCImage *pxcdepth, *pxccolor;
-	sample = pxcsm_->QuerySample();
-	pxcdepth = sample->depth;
-	pxccolor = sample->color;
-	pxcdepth = projection_->CreateDepthImageMappedToColor(pxcdepth, pxccolor);
-	depth = PXCImage2Mat(pxcdepth);
-	color = PXCImage2Mat(pxccolor);
+	sample_ = pxcsm_->QuerySample();
+	pxcdepth_ = sample_->depth;
+	pxccolor_ = sample_->color;
+	pxcdepth_ = projection_->CreateDepthImageMappedToColor(pxcdepth_, pxccolor_);
+	depth = PXCImage2Mat(pxcdepth_);
+	color = PXCImage2Mat(pxccolor_);
 	// Generate and Show 3D Point Cloud
-	pxcStatus sts = projection_->QueryVertices(pxcdepth, &pointscloud[0]);
+	pxcStatus sts = projection_->QueryVertices(pxcdepth_, &pointscloud[0]);
 	if (sts >= PXC_STATUS_NO_ERROR) {
-		PXCImage* drawVertices = dw_.DepthToWorldByQueryVertices(pointscloud, pxcdepth);
+		PXCImage* drawVertices = dw_.DepthToWorldByQueryVertices(pointscloud, pxcdepth_);
 		if (drawVertices){
 			Mat display = PXCImage2Mat(drawVertices);
 			imshow("display", display);
@@ -136,12 +134,11 @@ int VideoDriver::dobotCTRL()
 	// Define variable
 	Mat color, depth, display, color2, depth2;
 	vector<PXCPoint3DF32> pointscloud(camera_.height*camera_.width);
-	PXCCapture::Sample *sample;
-	PXCImage *pxcdepth,*pxccolor;
+	//PXCCapture::Sample *sample;
+	//PXCImage *pxcdepth,*pxccolor;
 	long framecnt;
 	// Configure RealSense
 	configureRealsense();
-	// Configure Point Cloud Show
 	PointsCloud dw(pxcsession_, camera_);
 	// Configure Segmentation
 	unsigned topk = 5;
@@ -169,8 +166,8 @@ int VideoDriver::dobotCTRL()
 	// Detect each video frame
 	for (framecnt = 1; true; ++framecnt, grasppoint = { 0, 0 }) {
 		if (pxcsm_->AcquireFrame(true) < PXC_STATUS_NO_ERROR)	break;
-		// Query the realsense color and depth, and project depth to color
-		try{
+		//try{
+			// Query the realsense color and depth, and pointscloud
 			acquireRealsenseData(color, depth, pointscloud);
 			if (!depth.cols || !color.cols)	continue;
 			// resize
@@ -289,13 +286,14 @@ int VideoDriver::dobotCTRL()
 			// Clear Segmentation data; 
 			myseg.clear();
 			// Release Realsense SDK memory and read next frame 
-			pxcdepth->Release();
+			//pxccolor_->Release();
+			pxcdepth_->Release();
 			pxcsm_->ReleaseFrame();
 
-		}
-		catch (cv::Exception e){
-			MESSAGE_COUT("ERROR", e.what());
-		}
+		//}
+		//catch (cv::Exception e){
+		//	MESSAGE_COUT("ERROR", e.what());
+		//}
 	}
 	return 1;
 

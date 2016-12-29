@@ -149,7 +149,7 @@
   <ItemGroup>
     <ClInclude Include="..\include\Common.hpp" />
     <ClInclude Include="..\include\VideoDriver.hpp" />
-    <ClInclude Include="..\include\DrawWorld.hpp" />
+    <ClInclude Include="..\include\PointsCloud.hpp" />
     <ClInclude Include="..\include\FileOperation.hpp" />
     <ClInclude Include="..\include\HOG-SVM.hpp" />
     <ClInclude Include="..\include\Macro.hpp" />
@@ -160,6 +160,7 @@
     <ClInclude Include="..\src\Socket.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\PointsCloud.cpp" />
     <ClCompile Include="..\src\VideoDriver.cpp" />
     <ClCompile Include="..\src\FileOperation.cpp" />
     <ClCompile Include="..\src\HOG-SVM.cpp" />
