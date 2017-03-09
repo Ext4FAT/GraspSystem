@@ -239,6 +239,14 @@ int VideoDriver::dobotCTRL()
 	//vector<Point2f> corners;
 	calArmCoordinate(origin, side);
 	Mat trans = Mat::eye(4, 4, CV_32FC1);
+	// Load HOG-SVM model
+	
+	// load model
+	HOG_SVM classifier();//
+
+
+
+
 	// Detect each video frame
 	for (framecnt = 1; true; ++framecnt) {
 		if (pxcsm_->AcquireFrame(true) < PXC_STATUS_NO_ERROR)	break;

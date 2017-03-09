@@ -2,6 +2,7 @@
 #include "Realsense.hpp"
 #include "FileOperation.hpp"
 #include "Segmentation.hpp"
+//#include "HOG-SVM.hpp"
 
 class VideoDriver: public FileOperation
 {
@@ -9,9 +10,7 @@ public:
 	VideoDriver(int width, int height, float fps = 30);
 	int configureRealsense();
 	int acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud);
-
 	int dobotCTRL();
-	Mat makeChessBoard(int pixels, int count);
 	
 private:
 	int commandParse(int key);
@@ -20,6 +19,7 @@ private:
 	Mat calibrationR2D(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud);
 	vector<Point2f> findChessBoardCorners(Mat &color, Mat &depth, Size pattern = { 3, 3 });
 	void calArmCoordinate(PXCPoint3DF32 origin, float side);
+	Mat makeChessBoard(int pixels, int count);
 private:
 	// Realsense
 	PXCSession *pxcsession_ = 0;
@@ -38,10 +38,8 @@ private:
 	vector<PXCPoint3DF32> corresponding_;
 	PXCPoint3DF32 origin_;
 	float side_;
-	//Grasp
+	// Grasp
 	bool autoLocalization_ = false;
-
-
-
-	//HOG_SVM classification_;
+	// Classifier
+	//HOG_SVM classifier_;
 };
