@@ -230,30 +230,36 @@ vector<Rect> VideoDriver::segmentation(Size segSize, unsigned topk, short thresh
 	Mat depth2, color2;
 	// Configure Segmentation
 	Segmentation myseg(segSize, topk, threshold);
-	// resize
+	// Resize
 	resize(depth_, depth2, segSize);
 	resize(color_, color2, segSize);
-	// segement
+	// Segment
 	myseg.Segment(depth2, color2);
-	vector<Rect> regions;
-	for (auto r : myseg.boundBoxes_){
-		//if (r.width / r.height < 2) {
-		//	Rect tmp(r.x * 2, r.y * 2, r.width * 2, r.height * 2);
-		//	rectangle(color_, tmp, Scalar(255, 255, 255), 2);
-		//	//Point bottom_mid = (tmp.br() + tmp.tl()) / 2;
-		//	//bottom_mid.y += tmp.height / 2;
-		//	//cv::circle(color_, bottom_mid, 3, Scalar(0, 0, 255), 5);
-		//	//grasppoint_ = bottom_mid;
-		//	//break;
-		//}
+	return myseg.boundBoxes_;
 }
 
 // Classification
-int VideoDriver::classification()
+vector<Rect> VideoDriver::classification(vector<Rect> &regions)
 {
-	
+	// Load HOG-SVM model
+	vector<Rect> filter;
+	HOG_SVM classifier(""); // Load some path
+	for (auto r : regions){
+		Mat roi = color_(r);
+		int p = static_cast<int>(classifier.predict(roi));
+		if (p == 1)
+			filter.push_back(r);
+	}
+	return filter;
 }
 
+/**
+ * @brief TODOLIST
+ */
+int VideoDriver::registration()
+{
+	return 0;
+}
 
 
 // Capture Frame
@@ -265,50 +271,34 @@ int VideoDriver::captureFrame()
 	configureRealsense();
 	PointsCloud dw(pxcsession_, camera_);
 	long framecnt = 0;
+	// Estimate Transformation Matrix
+	PXCPoint3DF32 origin = { 143.8221f, 4.8719f, -21.0000f };
+	float side = 71.0f;
+	calArmCoordinate(origin, side);
+	Mat trans = Mat::eye(4, 4, CV_32FC1);
 	// Detect each video frame
 	for (framecnt = 1; true; ++framecnt) {
 		if (pxcsm_->AcquireFrame(true) < PXC_STATUS_NO_ERROR)	
 			break;
-		//// Query the realsense color and depth, and pointscloud
+		// Query the realsense color and depth, and pointscloud
 		acquireRealsenseData(color_, depth_, pointscloud);
 		if (!depth_.cols || !color_.cols)	
 			continue;
-
-		//// resize
-		//resize(depth, depth2, segSize);
-		//resize(color, color2, segSize);
-
-
-		//// segement
-		//if (framecnt % 15 == 0) {
-		//	myseg.Segment(depth2, color2);
-		//	for (auto r : myseg.boundBoxes_){
-		//		if (r.width / r.height < 2) {
-		//			Rect tmp(r.x * 2, r.y * 2, r.width * 2, r.height * 2);
-		//			//rectangle(color, tmp, Scalar(255, 255, 255), 2);
-		//			Point bottom_mid = (tmp.br() + tmp.tl()) / 2;
-		//			bottom_mid.y += tmp.height / 2;
-		//			//cv::circle(color, bottom_mid, 3, Scalar(0, 0, 255), 5);
-		//			grasppoint = bottom_mid;
-		//			break;
-		//		}
-		//	}
-		//}
 		// Commands
 		int key = waitKey(1);
-		//if (key == ' '){
-		//	cout << key << endl;
-		//	trans = calibrationR2D(color, depth, pointscloud);
-		//	if (corners_.size() >= 9){
-		//		cv::drawChessboardCorners(color, pattern_, corners_, true);
-		//		drawCornerText(color, depth, corners_);
-		//	}
-		//}
-		//else {
-		//	int ret = commandParse(key);
-		//	if (!ret)
-		//		break;
-		//}
+		if (key == ' '){
+			cout << key << endl;
+			trans = calibrationR2D(color_, depth_, pointscloud);
+			if (corners_.size() >= 9){
+				cv::drawChessboardCorners(color_, pattern_, corners_, true);
+				drawCornerText(color_, depth_, corners_);
+			}
+		}
+		else {
+			int ret = commandParse(key);
+			if (!ret)
+				break;
+		}
 		//// Point Send
 		//if (preClick != click){
 		//	preClick = click;
@@ -348,22 +338,15 @@ int VideoDriver::captureFrame()
 //Drive Dobot work
 int VideoDriver::dobotCTRL()
 {
-
+	// Preparation
 	cv::namedWindow("color");
 	cv::namedWindow("depth");
 	cv::setMouseCallback("color", selectPoint, (void*)(&click_));
 	cv::setMouseCallback("depth", selectPoint, (void*)(&click_));
-	// Transformation Matrix
-	PXCPoint3DF32 origin = { 143.8221f, 4.8719f, -21.0000f };
-	float side = 71.0f;
-	//Size pattern = { 3, 3 };
-	//vector<Point2f> corners;
-	calArmCoordinate(origin, side);
-	Mat trans = Mat::eye(4, 4, CV_32FC1);
-	// Load HOG-SVM model
+
+
 	
-	// load model
-	HOG_SVM classifier();//
+
 
 	//Thread
 	thread master();
