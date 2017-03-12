@@ -276,10 +276,13 @@ int VideoDriver::Grasp()
 		myseg.Segment(depth2, color2);
 		vector<Rect> regions = myseg.boundBoxes_;
 		//vector<Rect> filter = classification(regions);
+
 		for (auto r : regions)
 			rectangle(color2, r, Scalar(0, 0, 255), 2);
-		waitKey(1);
+		imshow("regions", color2);
+
 		myseg.clear();
+		waitKey(1);
 	}
 	//imshow("regions", color2);
 	return 1;

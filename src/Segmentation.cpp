@@ -49,27 +49,17 @@ void Segmentation::Segment(Mat& depth, Mat& color)
 		}
 	sort(mainRegions_.begin(), mainRegions_.end(),
 		[](const vector<Point>& v1, const vector<Point>& v2){return v1.size() > v2.size(); });
+	// just select top-k
+	mainRegions_.resize(topk_);
+	// show segmentations
 	Mat disp = Mat::zeros(color.size(), CV_8UC3);
 	draw(mainRegions_, disp, colors_);
 	imshow("seg", disp);
-	//just select top-k
-	mainRegions_.resize(topk_);
-	//show boundbox
-	Mat regions = color.clone();
+	// calc boundbox
 	for (auto mr : mainRegions_) {
-		//boundBoxes_.push_back(cv::minAreaRect(mr).boundingRect());
-		Point pmax = { 0, 0 }, pmin = { 0xfff, 0xfff };
-		for (auto p : mr){
-			if (p.x > pmax.x) pmax.x = p.x;
-			if (p.y > pmax.y) pmax.y = p.y;
-			if (p.x < pmin.x) pmin.x = p.x;
-			if (p.y < pmin.y) pmin.y = p.y;
-		}
-		boundBoxes_.push_back(Rect(pmin, pmax));
+		Rect r = boundingRect(mr);
+		boundBoxes_.push_back(r);
 	}
-	for (auto rect : boundBoxes_)
-		rectangle(regions, rect, Scalar(255, 255, 255), 2);
-	imshow("regions", regions);
 }
 
 void Segmentation::DFS(Mat &depth, Mat &visit, Point cur, short &threshold, vector<Point> &v)
