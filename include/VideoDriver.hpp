@@ -25,12 +25,8 @@ public:
 	int releaseRealsense();
 	int acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud);
 	int captureFrame();
-	void command();
 	int dobotCTRL();
 
-	//just test thread
-	int test();
-	
 
 	vector<Rect> segmentation(Size segSize = { 320, 240 }, unsigned topk = 6, short threshold = 2);
 	vector<Rect> classification(vector<Rect> &regions);

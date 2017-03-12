@@ -54,7 +54,7 @@ void Segmentation::Segment(Mat& depth, Mat& color)
 	// show segmentations
 	Mat disp = Mat::zeros(color.size(), CV_8UC3);
 	draw(mainRegions_, disp, colors_);
-	imshow("seg", disp);
+	imshow("segmentation", disp);
 	// calc boundbox
 	for (auto mr : mainRegions_) {
 		Rect r = boundingRect(mr);
