@@ -1,11 +1,12 @@
 #include <pxcimage.h>
 #include <pxcprojection.h>
 #include <pxcsession.h>
-
 #include <opencv2\core\types.hpp>
 #include <vector>
+using std::vector;
 
 #define MAXBYTE 0xff
+
 
 class PointsCloud{
 public:
@@ -23,7 +24,7 @@ private:
 private:
 	PXCSession* session;
 	PXCImage *drawVertices;
-	std::vector<PXCPoint3DF32> vertices; 
+	vector<PXCPoint3DF32> vertices; 
 	PXCSizeI32 depthSize;
 	PXCPoint3DF32 light;
 };

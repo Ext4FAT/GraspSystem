@@ -186,7 +186,7 @@ inline void Segmentation::calculateConvexHulls()
 	}
 }
 
-inline void Segmentation::calculateBoundBoxex()
+inline void Segmentation::calculateBoundBoxes()
 {
 	for (auto &hull : convexHulls_)
 		boundBoxes_.push_back(hullBoundBox(hull));

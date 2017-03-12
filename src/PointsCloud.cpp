@@ -1,9 +1,6 @@
 #include "PointsCloud.hpp"
 
 
-
-
-
 // Extremely Potential Danger !!!!!!
 PointsCloud::PointsCloud()
 {}
@@ -37,7 +34,6 @@ void PointsCloud::init()
 	drawVertices = session->CreateImage(&drawVerticesInfo);
 }
 
-
 void PointsCloud::norm(PXCPoint3DF32 &v)
 {
 	float len = v.x*v.x + v.y*v.y + v.z*v.z;
@@ -61,6 +57,7 @@ float PointsCloud::dot(PXCPoint3DF32 &v0, PXCPoint3DF32 &v1)
 	r += v0.z * v1.z;
 	return r;
 }
+
 
 PXCImage* PointsCloud::DepthToWorldByQueryVertices(std::vector<PXCPoint3DF32>& vertices, PXCImage *depth)
 {

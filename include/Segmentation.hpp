@@ -23,7 +23,7 @@ public:
 private:
 	void regionMerge(Mat& depth, SegmentSet& segment, SegmentSet& blackRegions, unsigned topk, double minSim);
 	inline void calculateConvexHulls();
-	inline void calculateBoundBoxex();
+	inline void calculateBoundBoxes();
 	inline Rect hullBoundBox(PointSet& hull);
 
 	inline bool isRegionInsideHull(PointSet& pSet, PointSet& hull, double minSim);

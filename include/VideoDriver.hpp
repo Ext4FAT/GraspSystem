@@ -9,16 +9,30 @@ class VideoDriver: public FileOperation
 public:
 	VideoDriver(int width, int height, float fps = 30);
 	int configureRealsense();
+	int releaseRealsense();
 	int acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud);
 	int dobotCTRL();
+	int captureFrame();
+
+	vector<Rect> segmentation(Size segSize = { 320, 240 }, unsigned topk = 6, short threshold = 2);
+	int classification();
+	int registration();
+	int localization();
+	int Grasp();
 	
 private:
+	// Callback
+	static void selectPoint(int event, int x, int y, int flags, void* paras);
+	void drawCornerText(const Mat &color, const Mat &depth, const vector<Point2f> &corners);
+	// 
 	int commandParse(int key);
 	void placeWindows(int topk);
 	Mat PXCImage2Mat(PXCImage* pxc);
+	// Dobot related 
 	Mat calibrationR2D(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud);
 	vector<Point2f> findChessBoardCorners(Mat &color, Mat &depth, Size pattern = { 3, 3 });
 	void calArmCoordinate(PXCPoint3DF32 origin, float side);
+	// Create chessboard
 	Mat makeChessBoard(int pixels, int count);
 private:
 	// Realsense
@@ -31,6 +45,9 @@ private:
 	PXCSizeI32 camera_;
 	pxcF32 fps_;
 	PointsCloud dw_;
+	//OpenCV
+	Mat color_;
+	Mat depth_;
 	// ChessBoard
 	bool calibrated_ = false;
 	Size pattern_ = { 3, 3 };
@@ -40,6 +57,11 @@ private:
 	float side_;
 	// Grasp
 	bool autoLocalization_ = false;
+	// Mouse Click to select point
+	Point grasppoint_;
+	Point preClick_ = { -1, -1 };
+	Point click_ = { 0, 0 };
+
 	// Classifier
 	//HOG_SVM classifier_;
 };

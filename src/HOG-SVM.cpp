@@ -74,7 +74,7 @@ int HOG_SVM::getCategory(vector<string> &subdirs)
 
 int HOG_SVM::getDataSet(vector<string> &data_path, double gt)
 {
-    int nImgNum = data_path.size();
+	int nImgNum = static_cast<int>(data_path.size());
     int success = 0;
 	MESSAGE_COUT("GET DATA ", gt);
     for (auto &path: data_path){
@@ -92,7 +92,7 @@ int HOG_SVM::getDataSet(vector<string> &data_path, double gt)
 
 int HOG_SVM::getDataSet(vector<string> &data_path, vector<int> &seq, int num, int k, double gt)
 {
-	int nImgNum = data_path.size();
+	int nImgNum = static_cast<int>(data_path.size());
 	int each = nImgNum %k ? nImgNum / k + 1: nImgNum / k;
 	int start = num*each;
 	int end = std::max((num + 1)*each, nImgNum);
@@ -115,7 +115,7 @@ int HOG_SVM::getDataSet(vector<string> &data_path, vector<int> &seq, int num, in
 
 Mat HOG_SVM::getDataSet(std::vector<std::string> &data_path, std::vector<GroundTruth>& gt, int c)
 {
-    int nImgNum = data_path.size();
+	int nImgNum = static_cast<int>(data_path.size());
     int success = 0;
     Mat data_mat;	//feature matrix
     Mat src;
