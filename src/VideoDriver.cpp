@@ -3,9 +3,6 @@
 #include "Opencv.hpp"
 #include "HOG-SVM.hpp"
 #include "Socket.hpp"
-//thread
-#include <thread>
-using std::thread;
 
 #include <opencv2\core.hpp>
 
@@ -86,17 +83,15 @@ int VideoDriver::configureRealsense()
 //Release Realsense data
 int VideoDriver::releaseRealsense()
 {
-	this->pxcsession_ = 0;
-	this->pxcsm_ = 0;
-	this->pxcdev_ = 0;
-	this->projection_ = 0;
-	this->sample_ = 0;
-	this->pxcdepth_ = 0;
-	this->pxccolor_ = 0;
-	PXCSizeI32 camera_;
-	pxcF32 fps_;
-	PointsCloud dw_;
-
+	this->pxcsm_->Close();
+	this->pxcsession_->Release();
+	this->pxcsm_->Release();
+	this->pxcdev_->Release();
+	this->projection_->Release();
+	this->sample_->ReleaseImages();
+	this->pxcdepth_->Release();
+	this->pxccolor_->Release();
+	return 1;
 }
 
 
@@ -110,15 +105,15 @@ int VideoDriver::acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF
 	pxcdepth_ = projection_->CreateDepthImageMappedToColor(pxcdepth_, pxccolor_);
 	depth = PXCImage2Mat(pxcdepth_);
 	color = PXCImage2Mat(pxccolor_);
-	// Generate and Show 3D Point Cloud
-	pxcStatus sts = projection_->QueryVertices(pxcdepth_, &pointscloud[0]);
-	if (sts >= PXC_STATUS_NO_ERROR) {
-		PXCImage* drawVertices = dw_.DepthToWorldByQueryVertices(pointscloud, pxcdepth_);
-		if (drawVertices){
-			Mat display = PXCImage2Mat(drawVertices);
-			imshow("display", display);
-		}
-	}
+	//// Generate and Show 3D Point Cloud
+	//pxcStatus sts = projection_->QueryVertices(pxcdepth_, &pointscloud[0]);
+	//if (sts >= PXC_STATUS_NO_ERROR) {
+	//	PXCImage* drawVertices = dw_.DepthToWorldByQueryVertices(pointscloud, pxcdepth_);
+	//	if (drawVertices){
+	//		Mat display = PXCImage2Mat(drawVertices);
+	//		imshow("display", display);
+	//	}
+	//}
 	return 0;
 }
 
@@ -261,11 +256,86 @@ int VideoDriver::registration()
 	return 0;
 }
 
+int VideoDriver::Grasp()
+{
+	Mat depth2, color2;
+	Size segSize(320, 240);
+	unsigned topk = 6;
+	short threshold = 2;
+	Segmentation myseg(segSize, topk, threshold);
+
+	while (1){
+		//////////////////////////////////////////////
+		std::unique_lock<mutex> lk(myLock_);
+		myWait_.wait(lk);
+		resize(color_, color2, segSize);
+		resize(depth_, depth2, segSize);
+		//color_ = depth_ = 0;
+		lk.unlock();
+		/////////////////////////////////////////////
+		myseg.Segment(depth2, color2);
+		vector<Rect> regions = myseg.boundBoxes_;
+		//vector<Rect> filter = classification(regions);
+		for (auto r : regions)
+			rectangle(color2, r, Scalar(0, 0, 255), 2);
+		waitKey(1);
+		myseg.clear();
+	}
+	//imshow("regions", color2);
+	return 1;
+}
+
+
+void VideoDriver::command()
+{
+
+}
+int VideoDriver::test()
+{
+	cv::namedWindow("color");
+	cv::namedWindow("depth");
+	// Define variable
+	Mat color, depth;
+	vector<PXCPoint3DF32> pointscloud(camera_.height*camera_.width);
+	// Configure RealSense
+	configureRealsense();
+	PointsCloud dw(pxcsession_, camera_);
+	long framecnt = 0;
+	// Estimate Transformation Matrix
+	PXCPoint3DF32 origin = { 143.8221f, 4.8719f, -21.0000f };
+	float side = 71.0f;
+	calArmCoordinate(origin, side);
+	Mat trans = Mat::eye(4, 4, CV_32FC1);
+	/////////////////////////////////////////
+	thread task(&VideoDriver::Grasp, this);
+	////////////////////////////////////////
+	// Detect each video frame
+	for (framecnt = 1; true; ++framecnt) {
+		if (pxcsm_->AcquireFrame(true) < PXC_STATUS_NO_ERROR)
+			break;
+		acquireRealsenseData(color, depth, pointscloud);
+		// ////////////////////////////////////////
+		std::lock_guard<mutex> lck(myLock_);
+		color_ = color.clone();
+		depth_ = depth.clone();
+		myWait_.notify_all();
+		///////////////////////////////////////////
+		imshow("color", color);
+		imshow("depth", 65535 / 1200 * depth);
+		waitKey(1);
+		// Release Realsense SDK memory and read next frame 
+		pxcdepth_->Release();
+		pxcsm_->ReleaseFrame();
+	}
+	return 0;
+}
+
 
 // Capture Frame
 int VideoDriver::captureFrame()
 {
 	// Define variable
+	Mat color, depth;
 	vector<PXCPoint3DF32> pointscloud(camera_.height*camera_.width);
 	// Configure RealSense
 	configureRealsense();
@@ -281,17 +351,23 @@ int VideoDriver::captureFrame()
 		if (pxcsm_->AcquireFrame(true) < PXC_STATUS_NO_ERROR)	
 			break;
 		// Query the realsense color and depth, and pointscloud
-		acquireRealsenseData(color_, depth_, pointscloud);
-		if (!depth_.cols || !color_.cols)	
-			continue;
+
+		// Need to sync
+		acquireRealsenseData(color, depth, pointscloud);
+		color_ = color.clone();
+		depth_ = depth.clone();
+		//Grasp();
+
+
+
 		// Commands
 		int key = waitKey(1);
 		if (key == ' '){
 			cout << key << endl;
-			trans = calibrationR2D(color_, depth_, pointscloud);
+			trans = calibrationR2D(color, depth, pointscloud);
 			if (corners_.size() >= 9){
-				cv::drawChessboardCorners(color_, pattern_, corners_, true);
-				drawCornerText(color_, depth_, corners_);
+				cv::drawChessboardCorners(color, pattern_, corners_, true);
+				drawCornerText(color, depth, corners_);
 			}
 		}
 		else {
@@ -299,39 +375,40 @@ int VideoDriver::captureFrame()
 			if (!ret)
 				break;
 		}
-		//// Point Send
-		//if (preClick != click){
-		//	preClick = click;
-		//	if (calibrated_ && depth.at<float>(click)) {
-		//		PXCPoint3DF32 v = pointscloud[click.y * camera_.width + click.x];
-		//		string buf = convert(v, trans);
-		//		MESSAGE_COUT("Send Msg", buf);
-		//		MySend(buf);
-		//	}
-		//}
-		//if (autoLocalization_ && calibrated_ && depth.at<float>(grasppoint)) {
-		//	if (grasppoint.x > camera_.width || grasppoint.y > camera_.height)
-		//		break;
-		//	PXCPoint3DF32 v = pointscloud[grasppoint.y * camera_.width + grasppoint.x];
-		//	string buf = convert(v, trans);
-		//	MESSAGE_COUT("Send Msg", buf);
-		//	MySend(buf);
-		//}
-		////draw click point
-		//cv::circle(color, grasppoint, 3, Scalar(0, 0, 255), 5);
-		//cv::circle(color, click, 3, Scalar(255, 0, 0), 5);
-		//cv::circle(depth, click, 3, Scalar(5000), 5);
+		// Point Send
+		if (preClick_ != click_){
+			preClick_ = click_;
+			if (calibrated_ && depth.at<float>(click_)) {
+				PXCPoint3DF32 v = pointscloud[click_.y * camera_.width + click_.x];
+				string buf = convert(v, trans);
+				MESSAGE_COUT("Send Msg", buf);
+				MySend(buf);
+			}
+		}
+		if (autoLocalization_ && calibrated_ && depth.at<float>(grasppoint_)) {
+			if (grasppoint_.x > camera_.width || grasppoint_.y > camera_.height)
+				break;
+			PXCPoint3DF32 v = pointscloud[grasppoint_.y * camera_.width + grasppoint_.x];
+			string buf = convert(v, trans);
+			MESSAGE_COUT("Send Msg", buf);
+			MySend(buf);
+		}
+		//draw click point
+		cv::circle(color, grasppoint_, 3, Scalar(0, 0, 255), 5);
+		cv::circle(color, click_, 3, Scalar(255, 0, 0), 5);
+		cv::circle(depth, click_, 3, Scalar(5000), 5);
+		
+		thread t([depth]{imshow("depth", 65535 / 1200 * depth); waitKey(30); });
+		
 		//imshow("depth", 65535 / 1200 * depth);
-		//imshow("color", color);
-		//// Clear Segmentation data; 
-		//myseg.clear();
-
-
+		imshow("color", color);
 		// Release Realsense SDK memory and read next frame 
 		pxcdepth_->Release();
 		pxcsm_->ReleaseFrame();
-		//grasppoint = { 0, 0 };
 	}
+	//releaseRealsense();
+	this->pxcsm_->Close();
+	return 1;
 }
 
 
@@ -344,15 +421,18 @@ int VideoDriver::dobotCTRL()
 	cv::setMouseCallback("color", selectPoint, (void*)(&click_));
 	cv::setMouseCallback("depth", selectPoint, (void*)(&click_));
 
-
-	
-
-
 	//Thread
-	thread master();
-	thread worker();
+	thread master(&VideoDriver::captureFrame, this);
+	//thread worker(&VideoDriver::Grasp, this);
+	//thread control();
 
 
+	//captureFrame();
+	//thread worker(&VideoDriver::Grasp, this);
+	//worker.hardware_concurrency();
+
+
+	master.join();
 
 
 	return 1;

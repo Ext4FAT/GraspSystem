@@ -3,6 +3,19 @@
 #include "FileOperation.hpp"
 #include "Segmentation.hpp"
 //#include "HOG-SVM.hpp"
+#include <thread>
+#include <mutex>
+#include <condition_variable> 
+using std::thread;
+using std::mutex;
+using std::condition_variable;
+
+//#define MYRELEASE(_POINT_)		
+//	if(_POINT_){				\
+//		_POINT_->Release();		\
+//		_POINT_ = 0;			\
+//	}
+
 
 class VideoDriver: public FileOperation
 {
@@ -11,8 +24,13 @@ public:
 	int configureRealsense();
 	int releaseRealsense();
 	int acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud);
-	int dobotCTRL();
 	int captureFrame();
+	void command();
+	int dobotCTRL();
+
+	//just test thread
+	int test();
+	
 
 	vector<Rect> segmentation(Size segSize = { 320, 240 }, unsigned topk = 6, short threshold = 2);
 	vector<Rect> classification(vector<Rect> &regions);
@@ -61,6 +79,10 @@ private:
 	Point grasppoint_;
 	Point preClick_ = { -1, -1 };
 	Point click_ = { 0, 0 };
+	//thread
+	mutex myLock_;
+	condition_variable myWait_;
+
 
 	// Classifier
 	//HOG_SVM classifier_;
