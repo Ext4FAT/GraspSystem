@@ -48,6 +48,9 @@
     <ClInclude Include="..\include\PointsCloud.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Registration.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\FileOperation.cpp">

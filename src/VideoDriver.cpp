@@ -2,9 +2,165 @@
 #include "Macro.hpp"
 #include "Opencv.hpp"
 #include "HOG-SVM.hpp"
-#include "Socket.hpp"
-
+#include "Socket.hpp" 
 #include <opencv2\core.hpp>
+
+#include "Registration.h"
+#pragma comment(lib,"../dll/Registration.lib") 
+
+#include <pcl/common/transforms.h>
+typedef vector<PXCPointF32> PXC2DPointSet;
+class Reflect_Result {
+public:
+	bool isEmpty(){
+		return model.size() == 0 && grasp.size() == 0;
+	}
+public:
+	PXC2DPointSet model;
+	PXC2DPointSet grasp;
+};
+
+Rect myBoundBox(const vector<PXCPointF32> &pointset)
+{
+	//static Point extend(5, 5);
+	Point pmax(0, 0), pmin(0x7fffffff, 0x7fffffff);
+	for (auto p : pointset) {
+		if (p.x > pmax.x) pmax.x = p.x;
+		if (p.x < pmin.x) pmin.x = p.x;
+		if (p.y > pmax.y) pmax.y = p.y;
+		if (p.y < pmin.y) pmin.y = p.y;
+	}
+	return Rect(pmin, pmax);
+}
+
+
+
+
+// Convert Realsense's PXC to PCL's PointCloud
+size_t PXC2PCL(PointSet &pSet, vector<PXCPoint3DF32> &vertices, PointCloudNT::Ptr &scene, float scale = 1.f / 300.f)
+{
+	for (auto& p : pSet) {
+		p += p;
+		PXCPoint3DF32 ppp = vertices[p.y * 640 + p.x];
+		scene->push_back(PointNT());
+		PointNT& ps = scene->back();
+		ps.x = ppp.x*scale;
+		ps.y = ppp.y*scale;
+		ps.z = ppp.z*scale;
+	}
+	return scene->size();
+}
+
+// genRegistration
+vector<PXCPointF32> genRegistrationResult(	PXCProjection *projection,
+											PointCloudNT::Ptr &model,
+											Segmentation &myseg,
+											vector<PXCPoint3DF32> &vertices,
+											double scale,
+											RegisterParameter &para)
+{
+	//generate Point Cloud
+	PointCloudNT::Ptr mesh(new PointCloudNT);
+	PointCloudNT::Ptr model_align(new PointCloudNT);
+	PointCloudNT::Ptr grasp_align(new PointCloudNT);
+	size_t sz = PXC2PCL(myseg.mainRegions_[0], vertices, mesh, 1.0 / scale);
+	cout << "Generate Point Cloud: " << sz << endl;
+	//Alignment
+	Matrix4f transformation = Registration(model, mesh, model_align, para, true);
+	if (transformation == Matrix4f::Identity()) //Alignment failed 
+		return{};
+	vector<PXCPoint3DF32> result3d;
+	for (auto &pc : *model_align) {
+		result3d.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
+	}
+	//Reflect
+	vector<PXCPointF32> result2d(result3d.size());
+	projection->ProjectCameraToDepth(result3d.size(), &result3d[0], &result2d[0]);
+	return result2d;
+}
+
+Reflect_Result genRegistrationResult(	PXCProjection *projection,
+										PointCloudNT::Ptr &model,
+										PointCloudT::Ptr &grasp,
+										PointSet &segment,
+										vector<PXCPoint3DF32> &vertices,
+										double scale,
+										RegisterParameter &para)
+{
+	//generate Point Cloud
+	PointCloudNT::Ptr mesh(new PointCloudNT);
+	PointCloudNT::Ptr model_align(new PointCloudNT);
+	PointCloudT::Ptr grasp_align(new PointCloudT);
+	size_t sz = PXC2PCL(segment, vertices, mesh, 1.0 / scale);
+	MESSAGE_COUT("INFO", "Generate Point Cloud: " << sz);
+	//Alignment
+	Matrix4f transformation;
+	transformation = RegistrationNoShow(model, mesh, model_align, para);
+	if (transformation == Matrix4f::Identity()) //Alignment failed 
+		return{};
+	pcl::transformPointCloud(*grasp, *grasp_align, transformation);
+	//Reflect
+	Reflect_Result show2d;
+	show2d.model.resize(model_align->size());
+	show2d.grasp.resize(grasp_align->size());
+	vector<PXCPoint3DF32> result;
+	for (auto &pc : *model_align) {
+		result.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
+	}
+	projection->ProjectCameraToDepth(result.size(), &result[0], &show2d.model[0]);
+	result.clear();
+	for (auto &pc : *grasp_align) {
+		result.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
+	}
+	projection->ProjectCameraToDepth(result.size(), &result[0], &show2d.grasp[0]);
+	return show2d;
+}
+
+
+
+// show registration image
+void showRegistrationResult(const vector<PXCPointF32> &show2d, Mat &img, Vec3b color)
+{
+	for (auto p : show2d) {
+		Point pp(p.x, p.y);
+		if (pp.inside(Rect(0, 0, 640, 480))) {
+			img.at<Vec3b>(pp) = color;
+		}
+	}
+	imshow("reflect", img);
+}
+
+bool Reflect(	long framecnt,
+	string name,
+	Mat& img,
+	PXCProjection *projection,
+	PointCloudNT::Ptr &model,
+	PointCloudT::Ptr &grasp,
+	PointSet &segment,
+	vector<PXCPoint3DF32> &vertices,
+	double scale,
+	RegisterParameter &para)
+{
+	MESSAGE_COUT("[" << framecnt << "]", name);
+	Mat color = img.clone();
+	//vector<PXCPointF32> show2d = genRegistrationResult(projection_, model, myseg, vertices, PointCloudScale, leaf);
+
+	Reflect_Result show2d = genRegistrationResult(projection, model, grasp, segment, vertices, scale, para);
+
+	if (!show2d.isEmpty()) {
+		/*static variable*/
+		static Rect __range__ = { 0, 0, 640, 480 };
+		Rect boundbox = myBoundBox(show2d.grasp);
+		boundbox &= __range__;
+		rectangle(color, boundbox, Scalar(255, 0, 0), 2);
+		showRegistrationResult(show2d.model, color, Vec3b(255, 0, 255));
+		showRegistrationResult(show2d.grasp, color, Vec3b(0, 255, 255));
+		return true;
+	}
+}
+
+
+
 
 
 //Press Mouse to select point
