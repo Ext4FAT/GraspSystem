@@ -6,6 +6,7 @@
 
 #include <opencv2\core.hpp>
 
+
 //Press Mouse to select point
 void VideoDriver::selectPoint(int event, int x, int y, int flags, void* paras)
 {
@@ -95,7 +96,6 @@ int VideoDriver::releaseRealsense()
 }
 
 
-
 //Query Realsense data
 int VideoDriver::acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud)
 {
@@ -149,7 +149,6 @@ Mat VideoDriver::calibrationR2D(Mat &color, Mat &depth, vector<PXCPoint3DF32> &p
 	}
 	return trans;
 }
-
 
 // Parse commond and  execute
 int VideoDriver::commandParse(int key)
@@ -205,7 +204,8 @@ void VideoDriver::placeWindows(int topk)
 	}
 }
 
-string convert(PXCPoint3DF32 v, Mat &trans)
+// Convert coordinate system
+string cvtCoordinate(PXCPoint3DF32 v, Mat &trans)
 {
 	Mat tmp = Mat::ones(1, 4, CV_32FC1);
 	tmp.at<float>(0, 0) = v.x;
@@ -217,7 +217,6 @@ string convert(PXCPoint3DF32 v, Mat &trans)
 		to_string(res.at<float>(2, 0)) + "\n";
 	return buf;
 }
-
 
 // Segmentation
 vector<Rect> VideoDriver::segmentation(Size segSize, unsigned topk, short threshold)
@@ -258,13 +257,17 @@ int VideoDriver::registration()
 
 int VideoDriver::Grasp()
 {
+	clock_t start, end;
 	Mat depth2, color2;
+	// configure segmentation
 	Size segSize(320, 240);
 	unsigned topk = 6;
 	short threshold = 2;
 	Segmentation myseg(segSize, topk, threshold);
+	// configure classification
 
 	while (1){
+		start = clock();
 		//////////////////////////////////////////////
 		std::unique_lock<mutex> lk(myLock_);
 		myWait_.wait(lk);
@@ -273,14 +276,23 @@ int VideoDriver::Grasp()
 		//color_ = depth_ = 0;
 		lk.unlock();
 		/////////////////////////////////////////////
+		end = clock();
+
+		// segmentation
 		myseg.Segment(depth2, color2);
 		vector<Rect> regions = myseg.boundBoxes_;
-		//vector<Rect> filter = classification(regions);
 
 		for (auto r : regions)
 			rectangle(color2, r, Scalar(0, 0, 255), 2);
-		imshow("regions", color2);
 
+		
+		//double time = 1.0*(end - start) / CLOCKS_PER_SEC;
+		//string curfps = "FPS:" + to_string((int)(1 / time));
+		//cv::putText(color2, curfps, { 0, 26 }, 2, 1.0, Scalar(0, 0, 0), 2);
+		//imshow("regions", color2);
+
+		// classification
+		//vector<Rect> filter = classification(regions);
 		myseg.clear();
 		waitKey(1);
 	}
@@ -292,6 +304,7 @@ int VideoDriver::Grasp()
 int VideoDriver::captureFrame()
 {
 	// Define variable
+	clock_t start, end;
 	Mat color, depth;
 	vector<PXCPoint3DF32> pointscloud(camera_.height*camera_.width);
 	// Configure RealSense
@@ -308,6 +321,7 @@ int VideoDriver::captureFrame()
 		if (pxcsm_->AcquireFrame(true) < PXC_STATUS_NO_ERROR)	
 			break;
 		// Query the realsense color and depth, and pointscloud
+		start = clock();
 		acquireRealsenseData(color, depth, pointscloud);
 		// Critical area  /////////////////////
 		std::lock_guard<mutex> lck(myLock_);
@@ -315,7 +329,6 @@ int VideoDriver::captureFrame()
 		depth_ = depth.clone();
 		myWait_.notify_all();
 		///////////////////////////////////////////
-
 		// Keyboard commands parse
 		int key = waitKey(1);
 		if (key == ' '){ // calibrate the arm ordinary
@@ -332,7 +345,7 @@ int VideoDriver::captureFrame()
 			preClick_ = click_;
 			if (calibrated_ && depth.at<float>(click_)) {
 				PXCPoint3DF32 v = pointscloud[click_.y * camera_.width + click_.x];
-				string buf = convert(v, trans);
+				string buf = cvtCoordinate(v, trans);
 				MESSAGE_COUT("Send Msg", buf);
 				MySend(buf);
 			}
@@ -341,11 +354,17 @@ int VideoDriver::captureFrame()
 			if (grasppoint_.x > camera_.width || grasppoint_.y > camera_.height)
 				break;
 			PXCPoint3DF32 v = pointscloud[grasppoint_.y * camera_.width + grasppoint_.x];
-			string buf = convert(v, trans);
+			string buf = cvtCoordinate(v, trans);
 			MESSAGE_COUT("Send Msg", buf);
 			MySend(buf);
 		}
 		// Draw click point on source image
+
+		end = clock();
+		double time = 1.0*(end - start) / CLOCKS_PER_SEC;
+		string curfps = "FPS:" + to_string((int)(1 / time));
+		cv::putText(color, curfps, { 0, 26 }, 2, 1.0, Scalar(0, 0, 0),2);
+		
 		cv::circle(color, grasppoint_, 3, Scalar(0, 0, 255), 5);
 		cv::circle(depth, grasppoint_, 3, Scalar(50000), 5);
 		cv::circle(color, click_, 3, Scalar(255, 0, 0), 5);
