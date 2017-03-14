@@ -21,7 +21,8 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{DE5E97C4-860B-4F7B-B936-C7AE61630A56}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>ChessBoard</RootNamespace>
+    <RootNamespace>GraspSystem</RootNamespace>
+    <ProjectName>GraspSystem</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
