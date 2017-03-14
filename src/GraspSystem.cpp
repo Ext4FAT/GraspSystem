@@ -5,7 +5,7 @@
 #include "Socket.hpp" 
 #include <opencv2\core.hpp>
 
-#include "Registration.h"
+#include "Registration_.h"
 #pragma comment(lib,"../dll/Registration.lib") 
 
 #include <pcl/common/transforms.h>
@@ -66,7 +66,7 @@ vector<PXCPointF32> genRegistrationResult(	PXCProjection *projection,
 	size_t sz = PXC2PCL(myseg.mainRegions_[0], vertices, mesh, 1.0 / scale);
 	cout << "Generate Point Cloud: " << sz << endl;
 	//Alignment
-	Matrix4f transformation = Registration(model, mesh, model_align, para, true);
+	Matrix4f transformation = RegistrationPCL(model, mesh, model_align, para, true);
 	if (transformation == Matrix4f::Identity()) //Alignment failed 
 		return{};
 	vector<PXCPoint3DF32> result3d;
@@ -233,7 +233,7 @@ int GraspSystem::configureRealsense()
 		return -2;
 	}
 	//Configure Pointscloud
-	dw_ = PointsCloud(pxcsession_, camera_);
+	dw_ = RealsensePointsCloud(pxcsession_, camera_);
 	return 0;
 }
 
@@ -465,7 +465,7 @@ int GraspSystem::captureFrame()
 	vector<PXCPoint3DF32> pointscloud(camera_.height*camera_.width);
 	// Configure RealSense
 	configureRealsense();
-	PointsCloud dw(pxcsession_, camera_);
+	RealsensePointsCloud dw(pxcsession_, camera_);
 	long framecnt = 0;
 	// Estimate Transformation Matrix
 	PXCPoint3DF32 origin = { 143.8221f, 4.8719f, -21.0000f };

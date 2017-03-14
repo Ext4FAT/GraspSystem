@@ -35,14 +35,14 @@ enum FEATYPE {
 
 struct RegisterParameter {
 	//Downsample
-	float leaf = 0.01f;
+	float leaf = 0.01f; 
 	//RANSAC
 	int MaximumIterationsRANSAC = 50000; // Number of RANSAC iterations
 	int NumberOfSamples = 5; // Number of points to sample for generating/prerejecting a pose
 	int CorrespondenceRandomness = 5; // Number of nearest features to use
 	float SimilarityThreshold = 0.7f; // Polygonal edge length similarity threshold
 	float MaxCorrespondence = 2.5f; // Inlier threshold
-	float InlierFraction = 0.2f;
+	float InlierFraction = 0.2f; 
 	//ICP
 	double EuclideanEpsilon = 2e-8;
 	int MaximumIterationsICP = 1000;
@@ -119,7 +119,7 @@ MAKEREGISTRATIONDLL_API void Print4x4Matrix(const Matrix4f & matrix);
 *  @param para		   register parameter
 *  @param showGraphic  show graphic result or not
 */
-MAKEREGISTRATIONDLL_API Matrix4f Registration(PointCloudNT::Ptr &model,
+MAKEREGISTRATIONDLL_API Matrix4f RegistrationPCL(PointCloudNT::Ptr &model,
 	PointCloudNT::Ptr &mesh,
 	PointCloudNT::Ptr &model_align,
 	RegisterParameter &para,

@@ -1,4 +1,4 @@
-#include "PointsCloud.hpp"
+#include "RealsensePointsCloud.hpp"
 #include "Realsense.hpp"
 #include "FileOperation.hpp"
 #include "Segmentation.hpp"
@@ -58,7 +58,7 @@ private:
 	PXCImage *pxcdepth_ = 0 , *pxccolor_ = 0;
 	PXCSizeI32 camera_;
 	pxcF32 fps_;
-	PointsCloud dw_;
+	RealsensePointsCloud dw_;
 	//OpenCV
 	Mat color_;
 	Mat depth_;

@@ -1,11 +1,11 @@
-#include "PointsCloud.hpp"
+#include "RealsensePointsCloud.hpp"
 
 
 // Extremely Potential Danger !!!!!!
-PointsCloud::PointsCloud()
+RealsensePointsCloud::RealsensePointsCloud()
 {}
 //
-PointsCloud::PointsCloud(	PXCSession* s, 
+RealsensePointsCloud::RealsensePointsCloud(	PXCSession* s, 
 							PXCSizeI32 user_size, 
 							PXCPoint3DF32 l	)
 {
@@ -15,7 +15,7 @@ PointsCloud::PointsCloud(	PXCSession* s,
 	init();
 }
 
-PointsCloud::~PointsCloud()
+RealsensePointsCloud::~RealsensePointsCloud()
 {
 	session->Release();
 	drawVertices->Release();
@@ -23,7 +23,7 @@ PointsCloud::~PointsCloud()
 }
 
 
-void PointsCloud::init()
+void RealsensePointsCloud::init()
 {
 	PXCImage::ImageInfo drawVerticesInfo;
 	memset(&drawVerticesInfo, 0, sizeof(drawVerticesInfo));
@@ -34,7 +34,7 @@ void PointsCloud::init()
 	drawVertices = session->CreateImage(&drawVerticesInfo);
 }
 
-void PointsCloud::norm(PXCPoint3DF32 &v)
+void RealsensePointsCloud::norm(PXCPoint3DF32 &v)
 {
 	float len = v.x*v.x + v.y*v.y + v.z*v.z;
 	if (len>0) {
@@ -43,13 +43,13 @@ void PointsCloud::norm(PXCPoint3DF32 &v)
 	}
 }
 
-PXCPoint3DF32 PointsCloud::cross(PXCPoint3DF32 &v0, PXCPoint3DF32 &v1)
+PXCPoint3DF32 RealsensePointsCloud::cross(PXCPoint3DF32 &v0, PXCPoint3DF32 &v1)
 {
 	PXCPoint3DF32 vec = { v0.y*v1.z - v0.z*v1.y, v0.z*v1.x - v0.x*v1.z, v0.x*v1.y - v0.y*v1.x };
 	return vec;
 }
 
-float PointsCloud::dot(PXCPoint3DF32 &v0, PXCPoint3DF32 &v1)
+float RealsensePointsCloud::dot(PXCPoint3DF32 &v0, PXCPoint3DF32 &v1)
 {
 	float r = 0;
 	r += v0.x * v1.x;
@@ -59,7 +59,7 @@ float PointsCloud::dot(PXCPoint3DF32 &v0, PXCPoint3DF32 &v1)
 }
 
 
-PXCImage* PointsCloud::DepthToWorldByQueryVertices(std::vector<PXCPoint3DF32>& vertices, PXCImage *depth)
+PXCImage* RealsensePointsCloud::DepthToWorldByQueryVertices(std::vector<PXCPoint3DF32>& vertices, PXCImage *depth)
 {
 	if (!drawVertices)	return 0;
 	PXCImage::ImageInfo drawVerticesInfo = drawVertices->QueryInfo();
@@ -116,7 +116,7 @@ PXCImage* PointsCloud::DepthToWorldByQueryVertices(std::vector<PXCPoint3DF32>& v
 	return drawVertices;
 }
 
-PXCImage* PointsCloud::SegmentationWorld(std::vector<PXCPoint3DF32>& vertices, PXCImage *depth, std::vector<cv::Point> seg)
+PXCImage* RealsensePointsCloud::SegmentationWorld(std::vector<PXCPoint3DF32>& vertices, PXCImage *depth, std::vector<cv::Point> seg)
 {
 	if (!drawVertices)	return 0;
 	PXCImage::ImageInfo drawVerticesInfo = drawVertices->QueryInfo();

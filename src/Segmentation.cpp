@@ -55,11 +55,11 @@ void Segmentation::Segment(Mat& depth, Mat& color)
 	Mat disp = Mat::zeros(color.size(), CV_8UC3);
 	draw(mainRegions_, disp, colors_);
 	imshow("segmentation", disp);
-	// calc boundbox
-	for (auto mr : mainRegions_) {
-		Rect r = boundingRect(mr);
-		boundBoxes_.push_back(r);
-	}
+	//// calc boundbox
+	//for (auto mr : mainRegions_) {
+	//	Rect r = boundingRect(mr);
+	//	boundBoxes_.push_back(r);
+	//}
 }
 
 void Segmentation::DFS(Mat &depth, Mat &visit, Point cur, short &threshold, vector<Point> &v)

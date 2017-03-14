@@ -8,11 +8,11 @@ using std::vector;
 #define MAXBYTE 0xff
 
 
-class PointsCloud{
+class RealsensePointsCloud{
 public:
-	PointsCloud();//Potential Danger !!!!!!
-	PointsCloud(PXCSession* s, PXCSizeI32 user_size, PXCPoint3DF32 l = { .5, .5, 1.0 });
-	~PointsCloud();
+	RealsensePointsCloud();//Potential Danger !!!!!!
+	RealsensePointsCloud(PXCSession* s, PXCSizeI32 user_size, PXCPoint3DF32 l = { .5, .5, 1.0 });
+	~RealsensePointsCloud();
 public:
 	PXCImage* DepthToWorldByQueryVertices(std::vector<PXCPoint3DF32>& vertices, PXCImage *depth);
 	PXCImage* SegmentationWorld(std::vector<PXCPoint3DF32>& vertices, PXCImage *depth, std::vector<cv::Point> seg);
