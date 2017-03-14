@@ -1,4 +1,3 @@
-
 #include "HOG-SVM.hpp"
 #include "Macro.hpp"
 

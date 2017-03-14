@@ -1,4 +1,4 @@
-#include "VideoDriver.hpp"
+#include "GraspSystem.hpp"
 #include "Macro.hpp"
 #include "Opencv.hpp"
 #include "HOG-SVM.hpp"
@@ -164,7 +164,7 @@ bool Reflect(	long framecnt,
 
 
 //Press Mouse to select point
-void VideoDriver::selectPoint(int event, int x, int y, int flags, void* paras)
+void GraspSystem::selectPoint(int event, int x, int y, int flags, void* paras)
 {
 	if (cv::EVENT_LBUTTONDOWN == event){
 		Point* pos = (Point*)paras;
@@ -177,7 +177,7 @@ void VideoDriver::selectPoint(int event, int x, int y, int flags, void* paras)
 }
 
 //Draw corner points text index
-void VideoDriver::drawCornerText(const Mat &color, const Mat &depth, const vector<Point2f> &corners)
+void GraspSystem::drawCornerText(const Mat &color, const Mat &depth, const vector<Point2f> &corners)
 {
 	int i = 1;
 	for (auto c : corners){
@@ -187,7 +187,7 @@ void VideoDriver::drawCornerText(const Mat &color, const Mat &depth, const vecto
 }
 
 //Calculate arm Coordinate
-void VideoDriver::calArmCoordinate(PXCPoint3DF32 origin, float side)
+void GraspSystem::calArmCoordinate(PXCPoint3DF32 origin, float side)
 {
 	MESSAGE_COUT("Corresponding Points", "");
 	for (int i = 0; i < 3; i++){
@@ -205,7 +205,7 @@ void VideoDriver::calArmCoordinate(PXCPoint3DF32 origin, float side)
 }
 
 //Construct
-VideoDriver::VideoDriver(int width, int height, float fps)
+GraspSystem::GraspSystem(int width, int height, float fps)
 {
 	camera_.width = width;
 	camera_.height = height;
@@ -213,7 +213,7 @@ VideoDriver::VideoDriver(int width, int height, float fps)
 }
 
 //Configure Realsense parameters
-int VideoDriver::configureRealsense()
+int GraspSystem::configureRealsense()
 {
 	//Configure RealSense
 	pxcsession_ = PXCSession::CreateInstance();
@@ -238,7 +238,7 @@ int VideoDriver::configureRealsense()
 }
 
 //Release Realsense data
-int VideoDriver::releaseRealsense()
+int GraspSystem::releaseRealsense()
 {
 	this->pxcsm_->Close();
 	this->pxcsession_->Release();
@@ -253,7 +253,7 @@ int VideoDriver::releaseRealsense()
 
 
 //Query Realsense data
-int VideoDriver::acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud)
+int GraspSystem::acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud)
 {
 	sample_ = pxcsm_->QuerySample();
 	pxcdepth_ = sample_->depth;
@@ -274,7 +274,7 @@ int VideoDriver::acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF
 }
 
 // Estimate Realsense to Dobot Transformation Matrix
-Mat VideoDriver::calibrationR2D(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud)
+Mat GraspSystem::calibrationR2D(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud)
 {
 	Mat trans = Mat::eye(4, 4, CV_32FC1);
  	corners_ = findChessBoardCorners(color, depth, pattern_);
@@ -307,7 +307,7 @@ Mat VideoDriver::calibrationR2D(Mat &color, Mat &depth, vector<PXCPoint3DF32> &p
 }
 
 // Parse commond and  execute
-int VideoDriver::commandParse(int key)
+int GraspSystem::commandParse(int key)
 {
 	// judge 
 	switch (key){
@@ -340,7 +340,7 @@ int VideoDriver::commandParse(int key)
 }
 
 // Locate windows position
-void VideoDriver::placeWindows(int topk)
+void GraspSystem::placeWindows(int topk)
 {
 	cv::namedWindow("depth");
 	cv::namedWindow("color");
@@ -375,7 +375,7 @@ string cvtCoordinate(PXCPoint3DF32 v, Mat &trans)
 }
 
 // Segmentation
-vector<Rect> VideoDriver::segmentation(Size segSize, unsigned topk, short threshold)
+vector<Rect> GraspSystem::segmentation(Size segSize, unsigned topk, short threshold)
 {
 	Mat depth2, color2;
 	// Configure Segmentation
@@ -389,7 +389,7 @@ vector<Rect> VideoDriver::segmentation(Size segSize, unsigned topk, short thresh
 }
 
 // Classification
-vector<Rect> VideoDriver::classification(vector<Rect> &regions)
+vector<Rect> GraspSystem::classification(vector<Rect> &regions)
 {
 	// Load HOG-SVM model
 	vector<Rect> filter;
@@ -406,12 +406,12 @@ vector<Rect> VideoDriver::classification(vector<Rect> &regions)
 /**
  * @brief TODOLIST
  */
-int VideoDriver::registration()
+int GraspSystem::registration()
 {
 	return 0;
 }
 
-int VideoDriver::Grasp()
+int GraspSystem::Grasp()
 {
 	clock_t start, end;
 	Mat depth2, color2;
@@ -457,7 +457,7 @@ int VideoDriver::Grasp()
 }
 
 // Capture Frame
-int VideoDriver::captureFrame()
+int GraspSystem::captureFrame()
 {
 	// Define variable
 	clock_t start, end;
@@ -537,14 +537,14 @@ int VideoDriver::captureFrame()
 
 
 //Drive Dobot work
-int VideoDriver::dobotCTRL()
+int GraspSystem::dobotCTRL()
 {
 	// Preparation
 	placeWindows(0);
 	cv::setMouseCallback("color", selectPoint, (void*)(&click_));
 	cv::setMouseCallback("depth", selectPoint, (void*)(&click_));
 	//Thread
-	thread task(&VideoDriver::Grasp, this);
+	thread task(&GraspSystem::Grasp, this);
 	//thread master(&VideoDriver::captureFrame, this);
 	captureFrame();
 	return 1;
@@ -553,7 +553,7 @@ int VideoDriver::dobotCTRL()
 
 
 //Convert RealSense's PXCImage to Opencv's Mat
-Mat VideoDriver::PXCImage2Mat(PXCImage* pxc)
+Mat GraspSystem::PXCImage2Mat(PXCImage* pxc)
 {
 	if (!pxc)	return Mat(0, 0, 0);
 	PXCImage::ImageInfo info = pxc->QueryInfo();
@@ -574,7 +574,7 @@ Mat VideoDriver::PXCImage2Mat(PXCImage* pxc)
 }
 
 //Find chessboard from image
-vector<Point2f> VideoDriver::findChessBoardCorners(Mat &color, Mat &depth, Size pattern)
+vector<Point2f> GraspSystem::findChessBoardCorners(Mat &color, Mat &depth, Size pattern)
 {
 	vector<Point2f> corners;
 	Mat gray;
@@ -594,7 +594,7 @@ vector<Point2f> VideoDriver::findChessBoardCorners(Mat &color, Mat &depth, Size 
 }
 
 //How to build a chessboard
-Mat VideoDriver::makeChessBoard(int pixels, int count)
+Mat GraspSystem::makeChessBoard(int pixels, int count)
 {
 	int len = 2 * pixels * count;
 	Mat chess = Mat::zeros(len, len, CV_8UC3);

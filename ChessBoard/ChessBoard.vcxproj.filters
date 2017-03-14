@@ -42,13 +42,13 @@
     <ClInclude Include="..\src\Socket.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\VideoDriver.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\PointsCloud.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Registration.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\GraspSystem.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -65,10 +65,10 @@
     <ClCompile Include="..\src\Segmentation.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\VideoDriver.cpp">
+    <ClCompile Include="..\src\PointsCloud.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\PointsCloud.cpp">
+    <ClCompile Include="..\src\GraspSystem.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -17,10 +17,10 @@ using std::condition_variable;
 //	}
 
 
-class VideoDriver: public FileOperation
+class GraspSystem: public FileOperation
 {
 public:
-	VideoDriver(int width, int height, float fps = 30);
+	GraspSystem(int width, int height, float fps = 30);
 	int configureRealsense();
 	int releaseRealsense();
 	int acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud);
