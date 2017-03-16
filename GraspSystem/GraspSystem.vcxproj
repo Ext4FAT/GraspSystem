@@ -155,7 +155,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Common.hpp" />
-    <ClInclude Include="..\include\Registration.hpp" />
+    <ClInclude Include="..\include\RegistrationPCL.hpp" />
     <ClInclude Include="..\include\Registration_.h" />
     <ClInclude Include="..\include\GraspSystem.hpp" />
     <ClInclude Include="..\include\RealsensePointsCloud.hpp" />

@@ -1,9 +1,8 @@
 #include <Registration_.h>
 #pragma comment(lib,"../dll/Registration.lib") 
+
 #include <pcl/common/transforms.h>
 #include <Macro.hpp>
-
-
 #include "GraspSystem.hpp"
 #include "Opencv.hpp"
 #include "HOG-SVM.hpp"
@@ -11,10 +10,78 @@
 using std::pair;
 
 
-struct Meshes{
+struct MyObject{
+	string category;
+	string model_path;
+	string grasp_path;
 	PointCloudNT::Ptr model; // (new PointCloudNT);
 	PointCloudT::Ptr grasp; // (new PointCloudNT);
+	float leaf;
 };
+
+typedef vector<MyObject> Objects;
+class DesktopObj{
+public:
+	/**
+	* @brief DesktopObj: put the models and grasp points cloud in directory "./models/xxx/"
+	*					 and rename the model file as "xxx_-scaled.pcd" and rename the
+	*					 grasp file as 	"xxx_-grasp-scaled.pcd"
+	* @param names
+	*/
+	DesktopObj(vector<string> names);
+	int load_(MyObject &mobj);
+	
+	MyObject& operator[](string query){
+		const int &index = name2index[query];
+		return objects[index];
+	}
+	MyObject& operator[](int query){
+		return objects[query];
+	}
+	
+
+
+private:
+	map<string, int> name2index;
+	Objects objects;
+	float leaf;
+};
+
+DesktopObj::DesktopObj(vector<string> names)
+{
+	static string prefix = ".//mdoels//";
+	static string suffix_grasp = "-grasp-scaled.pcd";
+	static string suffix_model = "-scaled.pcd";
+	int cnt = 0;
+	objects.resize(names.size()); // If one load failed, can load the next
+	for (auto name : names){
+		string model_path = prefix + name + suffix_model;
+		string grasp_path = prefix + name + suffix_grasp;
+		PointCloudNT::Ptr m(new PointCloudNT); // (new PointCloudNT);
+		PointCloudT::Ptr g(new PointCloudT); // (new PointCloudNT);
+		MyObject& curobj = objects[cnt] = { name, model_path, grasp_path, m, g, leaf };
+		load_(curobj);
+		name2index[name] = ++cnt;
+	}
+}
+
+int DesktopObj::load_(MyObject &mobj)
+{
+	//Load 3D Model
+	if (!LoadModel(mobj.model_path, mobj.model)){
+		MESSAGE_COUT("ERROR", "Failed to load model from [" << mobj.model_path << "]");
+		return -1;
+	}
+	Downsample(mobj.model, mobj.leaf);
+	//Load grasping point region
+	if (!LoadGraspPcd(mobj.grasp_path, mobj.grasp)){
+		MESSAGE_COUT("ERROR", "Failed to load model from [" << mobj.model_path << "]");
+		return -2;
+	}
+	return 0;
+}
+
+
 
 class RegistrationPCL{
 public:
@@ -42,24 +109,24 @@ public:
 	Matrix4f Apply(PointCloudNT::Ptr &seg);
 private:	
 	RegisterParameter para_;
-	map<string, Meshes> mesh_;
+	Objects objects_;
 };
 
-int RegistrationPCL::Preparation(string category, string model_path, string grasp_path)
-{
-	//Load 3D Model
-	if (!LoadModel(model_path, mesh_.model)){
-		MESSAGE_COUT("ERROR", "Failed to load model from [" << model_path << "]");
-		return -1;
-	}
-	Downsample(mesh_.model, para_.leaf);
-	//Load grasping point region
-	if (!LoadGraspPcd(grasp_path, mesh_.grasp)){
-		MESSAGE_COUT("ERROR", "Failed to load model from [" << model_path << "]");
-		return -2;
-	}
-	return 0;
-}
+//int RegistrationPCL::Preparation(string category, string model_path, string grasp_path)
+//{
+//	//Load 3D Model
+//	if (!LoadModel(model_path, mesh_.model)){
+//		MESSAGE_COUT("ERROR", "Failed to load model from [" << model_path << "]");
+//		return -1;
+//	}
+//	Downsample(mesh_.model, para_.leaf);
+//	//Load grasping point region
+//	if (!LoadGraspPcd(grasp_path, mesh_.grasp)){
+//		MESSAGE_COUT("ERROR", "Failed to load model from [" << model_path << "]");
+//		return -2;
+//	}
+//	return 0;
+//}
 
 Matrix4f RegistrationPCL::Apply(PointCloudNT::Ptr &seg)
 {

@@ -48,10 +48,10 @@
     <ClInclude Include="..\include\Registration_.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\Registration.hpp">
+    <ClInclude Include="..\include\RealsensePointsCloud.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\RealsensePointsCloud.hpp">
+    <ClInclude Include="..\include\RegistrationPCL.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

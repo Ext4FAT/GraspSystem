@@ -119,7 +119,7 @@ MAKEREGISTRATIONDLL_API void Print4x4Matrix(const Matrix4f & matrix);
 *  @param para		   register parameter
 *  @param showGraphic  show graphic result or not
 */
-MAKEREGISTRATIONDLL_API Matrix4f RegistrationPCL(PointCloudNT::Ptr &model,
+MAKEREGISTRATIONDLL_API Matrix4f Registration(PointCloudNT::Ptr &model,
 	PointCloudNT::Ptr &mesh,
 	PointCloudNT::Ptr &model_align,
 	RegisterParameter &para,
