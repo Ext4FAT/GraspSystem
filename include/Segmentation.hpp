@@ -45,13 +45,16 @@ private:
 
 
 public:
-	SegmentSet mainRegions_;
-	SegmentSet blackRegions_;
+	//
+	inline const SegmentSet& mainSegmentation() { return mainSeg_; }
+private:
+	// 
+	SegmentSet mainSeg_;
+	SegmentSet blackSeg_;
 	vector<PointSet> convexHulls_;
 	vector<Rect> boundBoxes_;
 	vector<double> distance_;
-
-private:
+	//
 	static const vector<Point> _DIRECTIONS_;
 	static const vector<Point> _DIR_;
 	vector<Vec3b> colors_;

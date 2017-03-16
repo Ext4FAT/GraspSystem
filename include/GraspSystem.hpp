@@ -28,7 +28,6 @@ public:
 	int dobotCTRL();
 
 
-	vector<Rect> segmentation(Size segSize = { 320, 240 }, unsigned topk = 6, short threshold = 2);
 	vector<Rect> classification(vector<Rect> &regions);
 	int registration();
 	int localization();

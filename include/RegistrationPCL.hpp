@@ -164,12 +164,12 @@ Matrix4f RegistrationPCL::Apply(PointCloudNT::Ptr &seg)
 //return show2d;
 
 // Convert Realsense's PXC to PCL's PointCloud
-size_t PXC2PCL(	PointSet &pSet, 
+size_t PXC2PCL(	const PointSet &pSet, 
 				vector<PXCPoint3DF32> &vertices, 
 				PointCloudNT::Ptr &scene, 
 				float scale = 1.f / 300.f)
 {
-	for (auto& p : pSet) {
+	for (auto p : pSet) {
 		p += p;
 		PXCPoint3DF32 ppp = vertices[p.y * 640 + p.x];   // 640 is magic number
 		scene->push_back(PointNT());
@@ -219,7 +219,7 @@ void myAlgorithm()
 		resize(color, color2, segSize);
 		resize(depth, depth2, segSize);
 		myseg.Segment(depth2, color2);
-		vector<PointSet>& mainRegions = myseg.mainRegions_;
+		const vector<PointSet>& mainRegions = myseg.mainSegmentation();
 		//vector<Rect> mainRegions = myseg.boundBoxes_;
 		// classification
 		vector<pair<int,int>> candidates;
@@ -235,7 +235,7 @@ void myAlgorithm()
 		}
 		// registration
 		for (auto c : candidates){
-			PointSet &ps = mainRegions[c.second];
+			const PointSet &ps = mainRegions[c.second];
 			vector<PXCPoint3DF32> p3d;
 			PointCloudNT::Ptr sceneSeg;
 			PXC2PCL(ps, p3d, sceneSeg, 1 / scale);

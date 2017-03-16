@@ -52,33 +52,6 @@ size_t PXC2PCL(PointSet &pSet, vector<PXCPoint3DF32> &vertices, PointCloudNT::Pt
 }
 
 // genRegistration
-vector<PXCPointF32> genRegistrationResult(	PXCProjection *projection,
-											PointCloudNT::Ptr &model,
-											Segmentation &myseg,
-											vector<PXCPoint3DF32> &vertices,
-											double scale,
-											RegisterParameter &para)
-{
-	//generate Point Cloud
-	PointCloudNT::Ptr mesh(new PointCloudNT);
-	PointCloudNT::Ptr model_align(new PointCloudNT);
-	PointCloudNT::Ptr grasp_align(new PointCloudNT);
-	size_t sz = PXC2PCL(myseg.mainRegions_[0], vertices, mesh, 1.0 / scale);
-	cout << "Generate Point Cloud: " << sz << endl;
-	//Alignment
-	Matrix4f transformation = Registration(model, mesh, model_align, para, true);
-	if (transformation == Matrix4f::Identity()) //Alignment failed 
-		return{};
-	vector<PXCPoint3DF32> result3d;
-	for (auto &pc : *model_align) {
-		result3d.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
-	}
-	//Reflect
-	vector<PXCPointF32> result2d(result3d.size());
-	projection->ProjectCameraToDepth(result3d.size(), &result3d[0], &result2d[0]);
-	return result2d;
-}
-
 Reflect_Result genRegistrationResult(	PXCProjection *projection,
 										PointCloudNT::Ptr &model,
 										PointCloudT::Ptr &grasp,
@@ -374,19 +347,6 @@ string cvtCoordinate(PXCPoint3DF32 v, Mat &trans)
 	return buf;
 }
 
-// Segmentation
-vector<Rect> GraspSystem::segmentation(Size segSize, unsigned topk, short threshold)
-{
-	Mat depth2, color2;
-	// Configure Segmentation
-	Segmentation myseg(segSize, topk, threshold);
-	// Resize
-	resize(depth_, depth2, segSize);
-	resize(color_, color2, segSize);
-	// Segment
-	myseg.Segment(depth2, color2);
-	return myseg.boundBoxes_;
-}
 
 // Classification
 vector<Rect> GraspSystem::classification(vector<Rect> &regions)
@@ -436,11 +396,11 @@ int GraspSystem::Grasp()
 
 		// segmentation
 		myseg.Segment(depth2, color2);
-		vector<Rect> regions = myseg.boundBoxes_;
-
-		for (auto r : regions)
+		const SegmentSet &mainSeg = myseg.mainSegmentation();
+		for (auto ms : mainSeg){
+			Rect r = boundingRect(ms);
 			rectangle(color2, r, Scalar(0, 0, 255), 2);
-
+		}
 		
 		//double time = 1.0*(end - start) / CLOCKS_PER_SEC;
 		//string curfps = "FPS:" + to_string((int)(1 / time));

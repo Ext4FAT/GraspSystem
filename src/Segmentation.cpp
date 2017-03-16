@@ -42,18 +42,18 @@ void Segmentation::Segment(Mat& depth, Mat& color)
 				NonRecursive(depth, visit, current, pSet);
 				//insert segment
 				if (!value)
-					blackRegions_.push_back(pSet);
+					blackSeg_.push_back(pSet);
 				else
-					mainRegions_.push_back(pSet);
+					mainSeg_.push_back(pSet);
 			}
 		}
-	sort(mainRegions_.begin(), mainRegions_.end(),
+	sort(mainSeg_.begin(), mainSeg_.end(),
 		[](const vector<Point>& v1, const vector<Point>& v2){return v1.size() > v2.size(); });
 	// just select top-k
-	mainRegions_.resize(topk_);
+	mainSeg_.resize(topk_);
 	// show segmentations
 	Mat disp = Mat::zeros(color.size(), CV_8UC3);
-	draw(mainRegions_, disp, colors_);
+	draw(mainSeg_, disp, colors_);
 	imshow("segmentation", disp);
 	//// calc boundbox
 	//for (auto mr : mainRegions_) {
@@ -170,7 +170,7 @@ inline Rect Segmentation::hullBoundBox(PointSet& hull)
 
 inline void Segmentation::calculateConvexHulls()
 {
-	for (auto &seg : mainRegions_) {
+	for (auto &seg : mainSeg_) {
 		convexHulls_.push_back(PointSet());
 		convexHull(seg, convexHulls_.back(), false);
 	}
@@ -216,8 +216,8 @@ void Segmentation::randColor()
 
 void Segmentation::clear()
 {
-	this->mainRegions_.clear();
-	this->blackRegions_.clear();
+	this->mainSeg_.clear();
+	this->blackSeg_.clear();
 	this->distance_.clear();
 	this->convexHulls_.clear();
 	this->boundBoxes_.clear();
