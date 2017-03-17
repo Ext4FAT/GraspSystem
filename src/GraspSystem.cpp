@@ -1,7 +1,7 @@
 #include "GraspSystem.hpp"
 #include "Macro.hpp"
 #include "Opencv.hpp"
-#include "HOG-SVM.hpp"
+#include "Classification.hpp"
 #include "Socket.hpp" 
 #include <opencv2\core.hpp>
 
@@ -351,9 +351,9 @@ string cvtCoordinate(PXCPoint3DF32 v, Mat &trans)
 // Classification
 vector<Rect> GraspSystem::classification(vector<Rect> &regions)
 {
-	// Load HOG-SVM model
+	// Load Classification model
 	vector<Rect> filter;
-	HOG_SVM classifier(""); // Load some path
+	Classification classifier(""); // Load some path
 	for (auto r : regions){
 		Mat roi = color_(r);
 		int p = static_cast<int>(classifier.predict(roi));
@@ -381,7 +381,6 @@ int GraspSystem::Grasp()
 	short threshold = 2;
 	Segmentation myseg(segSize, topk, threshold);
 	// configure classification
-
 	while (1){
 		start = clock();
 		//////////////////////////////////////////////
@@ -397,10 +396,15 @@ int GraspSystem::Grasp()
 		// segmentation
 		myseg.Segment(depth2, color2);
 		const SegmentSet &mainSeg = myseg.mainSegmentation();
+		vector<Rect> candidates;
 		for (auto ms : mainSeg){
 			Rect r = boundingRect(ms);
-			rectangle(color2, r, Scalar(0, 0, 255), 2);
+			candidates.push_back(r);
+			//rectangle(color2, r, Scalar(0, 0, 255), 2);
 		}
+		// classification
+
+
 		
 		//double time = 1.0*(end - start) / CLOCKS_PER_SEC;
 		//string curfps = "FPS:" + to_string((int)(1 / time));

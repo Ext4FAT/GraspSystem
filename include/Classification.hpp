@@ -38,33 +38,34 @@ public:
 			index++;
 		}
 	}
+	int operator()(vector<string> names){
+		clear();
+		int index = 1;
+		sort(names.begin(), names.end());
+		for (auto &sd : names) {
+			name2index[sd] = index;
+			index2name[index] = sd;
+			index++;
+		}
+	}
 
-	string getName(int index) {
+	const string& operator[](int index){
 		return index2name[index];
 	}
-
-	const int getIndex(string categoryName) {
-		return name2index[categoryName];
+	int operator[](string name){
+		return name2index[name];
 	}
-
-	set<string> getNameSet() {
-		//index2name.
+	int size(){
+		return index2name.size() == name2index.size()? static_cast<int>(index2name.size()) : -1;
 	}
-
-	set<int> getIndexSet(){
-	
-	}
-
 	void clear() {
 		index2name.clear();
 		name2index.clear();
-		background = "";
 	}
 
-public:
+private:
 	map<int, string> index2name;
 	map<string, int> name2index;
-	string background = "Background";
 };
 
 
@@ -75,16 +76,16 @@ class DataSeq {
 /*******************************************************************************
 *   Utilize HOG as feature, and SVM as machine learning model.				   *
 *******************************************************************************/
-class HOG_SVM : public FileOperation
+class Classification : public FileOperation
 {
 public:
     /** @brief default constructor */
-    HOG_SVM();
+    Classification();
     /**
-     * @brief HOG_SVM: load xml file as model
+     * @brief Classification: load xml file as model
      * @param model_path    xml loacation
      */
-    HOG_SVM(const string model_path);
+    Classification(const string model_path);
     /**
      * @brief loadModel: load xml file as model
      * @param model_path    xml loacation
@@ -109,6 +110,7 @@ public:
      * @param data_path     image location
      * @return      feature matrix
      */
+	int getDataSet(string dir, int gt);
     int getDataSet(vector<string> &data_path, double gt);
 	int getDataSet(vector<string> &data_path, vector<int> &seq, int num, int k, double gt);
     Mat getDataSet(vector<string> &data_path, vector<GroundTruth>& gt, int c);
@@ -138,12 +140,6 @@ public:
      */
     int testing(Mat& testSet, float gt);
     int testing(Mat& testSet, vector<GroundTruth> gt);
-	/**
-	* @brief BinaryClassification: just train two classification.
-	* @param pos_path/neg_path	postive_data/negative_data
-	* @return  SUCCESS / FAILED
-	*/
-	int BinaryClassification(string pos_path, string neg_path);
     /**
      * @brief EndToEnd: the whole process, training and testing
      * @param data_path datapath
@@ -158,11 +154,9 @@ public:
     float predict(Mat& image);
 	/**
 	* @brief crossValidation: predict label in practical application
-	* @param dir    data dir
 	* @param k		k-cross-validation
-	* @return average error rate
 	*/
-	float crossValidation(string dir, int k);
+	void crossValidation(int k);
 	/**
 	* @brief releaseTrainSet: clear trainMat_ and labels_
 	*/
@@ -174,16 +168,6 @@ public:
 	/**
 	* @brief get members const
 	*/
-	string getCategoryName(int index) {
-		return catergory_.index2name[index];
-	}
-
-	int getCategoryIndex(string name) {
-		if (catergory_.name2index.find(name) != catergory_.name2index.end())
-			return catergory_.name2index[name];
-		return -1;
-	}
-
 	const Category& category(){
 		return catergory_;
 	}
@@ -197,4 +181,5 @@ private:
 	Category catergory_;
 	Mat trainMat_;
 	Mat labels_;
+	Size hog_ = { 64, 64 };
 };
