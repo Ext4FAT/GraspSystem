@@ -1,12 +1,11 @@
 #include "Segmentation.hpp"
-#include <stack>
-using std::stack;
+using namespace _IDLER_;
 
-const vector<Point> Segmentation::_DIRECTIONS_ = { Point(1, 0), Point(0, -1),
-Point(-1, 0), Point(0, 1),
-Point(1, 1), Point(-1, 1),
-Point(1, -1), Point(-1, -1) };
-const vector<Point> Segmentation::_DIR_ = { Point(1, 0), Point(0, 1), Point(1, 1) };
+const vector<Point> Segmentation::_DIRECTIONS_ = {	Point(1, 0), Point(0, -1),
+													Point(-1, 0), Point(0, 1),
+													Point(1, 1), Point(-1, 1),
+													Point(1, -1), Point(-1, -1) }; // search directions
+const vector<Point> Segmentation::_DIR_ = { Point(1, 0), Point(0, 1), Point(1, 1) }; // complete depth directions
 
 
 Segmentation::Segmentation(int width, int height, unsigned k, short t)

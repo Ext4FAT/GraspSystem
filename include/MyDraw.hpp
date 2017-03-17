@@ -1,7 +1,3 @@
-#ifndef MYDRAW_H
-#define MYDRAW_H
-#endif // MYDRAW_H
-
 #include "Common.hpp"
 
 class Draw

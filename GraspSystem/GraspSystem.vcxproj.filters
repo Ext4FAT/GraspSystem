@@ -1,78 +1,87 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="源文件">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="头文件">
+    <Filter Include="Header">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="资源文件">
+    <Filter Include="Header\Class">
+      <UniqueIdentifier>{32d9bc7c-81a7-41f7-b639-94657ab14a0e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Resource">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header\Head">
+      <UniqueIdentifier>{573f35fe-20d9-4f96-8321-564000d7e458}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header\Class\Virtual">
+      <UniqueIdentifier>{7b711151-40b5-4311-b396-ca50345f4e09}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\Common.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FileOperation.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\Macro.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\MyDraw.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\Opencv.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\Realsense.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\Segmentation.hpp">
-      <Filter>头文件</Filter>
+      <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Socket.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\GraspSystem.hpp">
-      <Filter>头文件</Filter>
+      <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Registration_.h">
-      <Filter>头文件</Filter>
+      <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\RealsensePointsCloud.hpp">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\include\Common.hpp">
+      <Filter>Header\Head</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\RegistrationPCL.hpp">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\include\GraspSystem.hpp">
+      <Filter>Header\Class</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Classification.hpp">
-      <Filter>头文件</Filter>
+      <Filter>Header\Class</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Macro.hpp">
+      <Filter>Header\Head</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Opencv.hpp">
+      <Filter>Header\Head</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Segmentation.hpp">
+      <Filter>Header\Class</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\RegistrationPCL.hpp">
+      <Filter>Header\Class</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\RealsensePointsCloud.hpp">
+      <Filter>Header\Class</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FileOperation.hpp">
+      <Filter>Header\Class\Virtual</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\MyDraw.hpp">
+      <Filter>Header\Class\Virtual</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\FileOperation.cpp">
-      <Filter>源文件</Filter>
+      <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\src\main.cpp">
-      <Filter>源文件</Filter>
+      <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\src\Segmentation.cpp">
-      <Filter>源文件</Filter>
+      <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\src\GraspSystem.cpp">
-      <Filter>源文件</Filter>
+      <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\src\RealsensePointsCloud.cpp">
-      <Filter>源文件</Filter>
+      <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\src\Classification.cpp">
-      <Filter>源文件</Filter>
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

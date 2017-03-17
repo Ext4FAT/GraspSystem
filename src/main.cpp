@@ -10,7 +10,7 @@ int main(int argc, char** argv)
 	//GraspSystem data(640, 480, 30);
 	//data.dobotCTRL();
 
-	Classification classifier;
+	_IDLER_::Classification classifier;
 	classifier.crossValidation(10);
 
 	return 1;

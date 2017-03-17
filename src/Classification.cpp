@@ -1,5 +1,6 @@
 #include "Classification.hpp"
 #include "Macro.hpp"
+using namespace _IDLER_;
 
 Classification::Classification()
 {

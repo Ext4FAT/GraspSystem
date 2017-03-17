@@ -10,11 +10,9 @@ using std::thread;
 using std::mutex;
 using std::condition_variable;
 
-//#define MYRELEASE(_POINT_)		
-//	if(_POINT_){				\
-//		_POINT_->Release();		\
-//		_POINT_ = 0;			\
-//	}
+using _IDLER_::RealsensePointsCloud;
+using _IDLER_::Segmentation;
+//using _IDLER_::Classification;
 
 
 class GraspSystem: public FileOperation

@@ -2,9 +2,7 @@
 	Some Files and Os Operation, such as open, read, write, etc 
 *******************************************************************************/
 #pragma once
-
 #include <vector>
-
 class FileOperation{
 public:
 	virtual std::vector<std::string> getCurdirFilePath(std::string dirPath);

@@ -9,6 +9,11 @@
 #pragma comment(lib,"../dll/Registration.lib") 
 
 #include <pcl/common/transforms.h>
+
+
+using namespace _IDLER_;
+
+
 typedef vector<PXCPointF32> PXC2DPointSet;
 class Reflect_Result {
 public:

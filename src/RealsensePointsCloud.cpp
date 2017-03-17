@@ -1,5 +1,5 @@
 #include "RealsensePointsCloud.hpp"
-
+using namespace _IDLER_;
 
 // Extremely Potential Danger !!!!!!
 RealsensePointsCloud::RealsensePointsCloud()
@@ -133,28 +133,28 @@ PXCImage* RealsensePointsCloud::SegmentationWorld(std::vector<PXCPoint3DF32>& ve
 		pxcI32 x = p.x * 2, y = p.y * 2;
 		PXCPoint3DF32 v0 = vertices[y * dinfo.width + x];
 		if (v0.z != 0) {
-			//取v0四角点
+			// get v0's four corner points
 			PXCPoint3DF32 v1 = vertices[(y - 1) * dinfo.width + (x - 1)];
 			PXCPoint3DF32 v2 = vertices[(y - 1) * dinfo.width + (x + 1)];
 			PXCPoint3DF32 v3 = vertices[(y + 1) * dinfo.width + (x + 1)];
 			PXCPoint3DF32 v4 = vertices[(y + 1) * dinfo.width + (x - 1)];
-			//转成向量
+			//convert to four vectors
 			v1.x = v1.x - v0.x; v1.y = v1.y - v0.y; v1.z = v1.z - v0.z;
 			v2.x = v2.x - v0.x; v2.y = v2.y - v0.y; v2.z = v2.z - v0.z;
 			v3.x = v3.x - v0.x; v3.y = v3.y - v0.y; v3.z = v3.z - v0.z;
 			v4.x = v4.x - v0.x; v4.y = v4.y - v0.y; v4.z = v4.z - v0.z;
-			//求出四个法向量
+			// get four normal vectors
 			PXCPoint3DF32 vn1 = cross(v1, v2); norm(vn1);
 			PXCPoint3DF32 vn2 = cross(v2, v3); norm(vn2);
 			PXCPoint3DF32 vn3 = cross(v3, v4); norm(vn3);
 			PXCPoint3DF32 vn4 = cross(v4, v1); norm(vn4);
-			//
+			// normalization
 			vn1.x += vn2.x + vn3.x + vn4.x;
 			vn1.y += vn2.y + vn3.y + vn4.y;
 			vn1.z += vn2.z + vn3.z + vn4.z;
 			norm(vn1);
-			//
 			norm(light);
+			// show light
 			fLight = dot(vn1, light);
 		}
 		pdrawVerticesDat[4 * x] = pdrawVerticesDat[4 * x + 1] = pdrawVerticesDat[4 * x + 2] = pxcBYTE(abs(fLight) * 255);
