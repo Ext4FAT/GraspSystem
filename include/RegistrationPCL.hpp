@@ -67,23 +67,38 @@ namespace _IDLER_{
 		{}
 		RegistrationPCL(RegisterParameter p) :para_(p)
 		{}
-		//// Set parameters 
-		//void setLeaf(float l); // Number of RANSAC iterations
-		//void setMaximumIterationsRANSA(int mi); // Number of RANSAC iterations
-		//void setNumberOfSamples(int n); // Number of points to sample for generating/prerejecting a pose
-		//void setCorrespondenceRandomness(int c); // Number of nearest features to use
-		//void setSimilarityThreshold(float sim); // Polygonal edge length similarity threshold
-		//void setMaxCorrespondence(float mc); // Inlier threshold
-		//void setInlierFraction(float irate);
 
-		// Get parameters
-		RegisterParameter getParameters(){
-			return para_;
-		}
 		// Preparation
 		int Preparation(string model_path, string grasp_path);
 		// Apply
 		Matrix4f Apply(PointCloudNT::Ptr &seg);
+
+		// Get parameters
+		inline const RegisterParameter& getParameters(){
+			return para_;
+		}
+		// Set parameters 
+		inline void setLeaf(float l) { // Number of RANSAC iterations
+			para_.leaf = l;
+		}
+		inline void setMaximumIterationsRANSA(int mi) { // Number of RANSAC iterations
+			para_.MaximumIterationsRANSAC = mi;
+		}
+		inline void setNumberOfSamples(int n) { // Number of points to sample for generating/prerejecting a pose
+			para_.NumberOfSamples = n;
+		}
+		inline void setCorrespondenceRandomness(int c) { // Number of nearest features to use
+			para_.CorrespondenceRandomness = c;
+		}
+		inline void setSimilarityThreshold(float sim) { // Polygonal edge length similarity threshold
+			para_.SimilarityThreshold = sim;
+		}
+		inline void setMaxCorrespondence(float mc) { // Inlier threshold
+			para_.MaxCorrespondence = mc;
+		}
+		inline void setInlierFraction(float orate){ // Outlier rate
+			para_.InlierFraction = orate;
+		}
 	private:
 		RegisterParameter para_;
 		Objects objects_;
