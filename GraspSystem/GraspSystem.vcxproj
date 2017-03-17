@@ -174,6 +174,7 @@
     <ClCompile Include="..\src\FileOperation.cpp" />
     <ClCompile Include="..\src\Classification.cpp" />
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\RegistrationPCL.cpp" />
     <ClCompile Include="..\src\Segmentation.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
