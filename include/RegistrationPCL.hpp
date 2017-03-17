@@ -1,12 +1,6 @@
-#include <Registration_.h>
-#pragma comment(lib,"../dll/Registration.lib") 
-
-#include <pcl/common/transforms.h>
-#include <opencv2\core.hpp>
-#include <Macro.hpp>
-#include "GraspSystem.hpp"
 #include "Opencv.hpp"
-#include "Classification.hpp"
+#include "Registration_.h"
+#pragma comment(lib,"../dll/Registration.lib") 
 
 namespace _IDLER_{
 	/**

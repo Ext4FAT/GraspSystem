@@ -1,4 +1,8 @@
 #include "RegistrationPCL.hpp"
+#include "Macro.hpp"
+#include "Classification.hpp"
+#include <pcl/common/transforms.h>
+
 using std::pair;
 using namespace _IDLER_;
 
