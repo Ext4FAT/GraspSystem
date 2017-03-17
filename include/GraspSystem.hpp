@@ -2,7 +2,7 @@
 #include "Realsense.hpp"
 #include "FileOperation.hpp"
 #include "Segmentation.hpp"
-//#include "HOG-SVM.hpp"
+//#include "Classification.hpp"
 #include <thread>
 #include <mutex>
 #include <condition_variable> 
@@ -80,5 +80,5 @@ private:
 
 
 	// Classifier
-	//HOG_SVM classifier_;
+	//Classification classifier_;
 };

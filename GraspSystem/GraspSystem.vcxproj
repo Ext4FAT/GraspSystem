@@ -160,7 +160,7 @@
     <ClInclude Include="..\include\GraspSystem.hpp" />
     <ClInclude Include="..\include\RealsensePointsCloud.hpp" />
     <ClInclude Include="..\include\FileOperation.hpp" />
-    <ClInclude Include="..\include\HOG-SVM.hpp" />
+    <ClInclude Include="..\include\Classification.hpp" />
     <ClInclude Include="..\include\Macro.hpp" />
     <ClInclude Include="..\include\MyDraw.hpp" />
     <ClInclude Include="..\include\Opencv.hpp" />
@@ -172,7 +172,7 @@
     <ClCompile Include="..\src\RealsensePointsCloud.cpp" />
     <ClCompile Include="..\src\GraspSystem.cpp" />
     <ClCompile Include="..\src\FileOperation.cpp" />
-    <ClCompile Include="..\src\HOG-SVM.cpp" />
+    <ClCompile Include="..\src\Classification.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\Segmentation.cpp" />
   </ItemGroup>

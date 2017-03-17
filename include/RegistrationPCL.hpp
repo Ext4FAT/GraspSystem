@@ -5,7 +5,7 @@
 #include <Macro.hpp>
 #include "GraspSystem.hpp"
 #include "Opencv.hpp"
-#include "HOG-SVM.hpp"
+#include "Classification.hpp"
 #include <opencv2\core.hpp>
 using std::pair;
 
@@ -26,9 +26,9 @@ public:
 	* @brief DesktopObj: put the models and grasp points cloud in directory "./models/xxx/"
 	*					 and rename the model file as "xxx_-scaled.pcd" and rename the
 	*					 grasp file as 	"xxx_-grasp-scaled.pcd"
-	* @param names
+	* @param catergories
 	*/
-	DesktopObj(vector<string> names);
+	DesktopObj(vector<string> catergories);
 	int load_(MyObject &mobj);
 	
 	MyObject& operator[](string query){
@@ -47,14 +47,14 @@ private:
 	float leaf;
 };
 
-DesktopObj::DesktopObj(vector<string> names)
+DesktopObj::DesktopObj(vector<string> catergories)
 {
 	static string prefix = ".//mdoels//";
 	static string suffix_grasp = "-grasp-scaled.pcd";
 	static string suffix_model = "-scaled.pcd";
 	int cnt = 0;
-	objects.resize(names.size()); // If one load failed, can load the next
-	for (auto name : names){
+	objects.resize(catergories.size()); // If one load failed, can load the next
+	for (auto name : catergories){
 		string model_path = prefix + name + suffix_model;
 		string grasp_path = prefix + name + suffix_grasp;
 		PointCloudNT::Ptr m(new PointCloudNT); // (new PointCloudNT);
@@ -198,7 +198,7 @@ void myAlgorithm()
 	Segmentation myseg(segSize, topk, threshold);
 	// configure classification
 	string classifier_path;
-	HOG_SVM myclass(classifier_path);
+	Classification myclass(classifier_path);
 	// configure registration
 	string model_path;
 	string grasp_path;

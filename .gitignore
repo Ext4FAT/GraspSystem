@@ -3,7 +3,9 @@
 
 # My Customer
 *.png
-
+models/
+classifier/
+chess/
 
 # User-specific files
 *.suo

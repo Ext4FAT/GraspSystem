@@ -21,9 +21,6 @@
     <ClInclude Include="..\include\FileOperation.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\HOG-SVM.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\Macro.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -54,12 +51,12 @@
     <ClInclude Include="..\include\RegistrationPCL.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Classification.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\FileOperation.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\HOG-SVM.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\main.cpp">
@@ -72,6 +69,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\RealsensePointsCloud.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Classification.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
