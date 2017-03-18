@@ -159,10 +159,12 @@ namespace _IDLER_{
 		 */
 		float predict(Mat& image);
 		/**
-		* @brief crossValidation: predict label in practical application
-		* @param k		k-cross-validation
+		* @brief crossValidation:	predict label in practical application,
+		* @param k			k-cross-validation
+		* @param dataset	dataset dir
+		* @param savedir	save xml dir; if savedir == "", do not save
 		*/
-		void crossValidation(int k);
+		void crossValidation(int k, string dataset = "..\\dataset\\", string savedir = "..\\classifier\\");
 		/**
 		* @brief releaseTrainSet: clear trainMat_ and labels_
 		*/

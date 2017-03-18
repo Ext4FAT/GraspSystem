@@ -14,8 +14,8 @@
 #include <map>
 #include <set>
 
+#include <numeric> 
 #include <algorithm>
-
 
 using std::set;
 using std::map;

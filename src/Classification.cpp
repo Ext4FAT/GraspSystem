@@ -40,17 +40,6 @@ bool Classification::loadModel(const string model_path)
 
 Mat Classification::extractFeature(Mat Img, Size mrs)
 {
-    /**
-     * @brief Classification::extractFeature
-        The story behind 1764
-        For example
-        window size is 64x64, block size is 16x16 and block setp is 8x8£¬cell size is 8x8,
-        the block number window contained is (£¨64-16£©/8+1)*((64-16)/8+1) = 7*7 = 49,
-        the cell number each block contained is (16/8)*(16/8) = 4
-        every cell can project 9 bin, and each bin related to 9 vector
-        so feature_dim  = B x C x N, and caulated result is  1764
-        (B is each window's blocks number, C is every block's cell number, n is bin number)
-     */
     resize(Img, Img, mrs);
     HOGDescriptor *hog = new HOGDescriptor(hog_, cvSize(16, 16), cvSize(8, 8), cvSize(8, 8), 9);
     std::vector<float> descriptors;
@@ -141,7 +130,7 @@ Mat Classification::getDataSet(std::vector<std::string> &data_path, std::vector<
 
 int Classification::setSvmParameter(int sv_num, int c_r_type, int kernel, double gamma)
 {
-    TermCriteria criteria = TermCriteria(CV_TERMCRIT_EPS, sv_num, FLT_EPSILON);	//max support vectocr 200
+    TermCriteria criteria = TermCriteria(CV_TERMCRIT_EPS, sv_num, FLT_EPSILON);	//support vectors max is 200
     svm_->setType(c_r_type);
     svm_->setKernel(kernel);
     if (kernel == SVM::RBF)	svm_->setGamma(gamma);
@@ -224,20 +213,23 @@ vector<int> getRand(int n)
 }
 
 
-void Classification::crossValidation(int k) 
+void _IDLER_::Classification::crossValidation(int k, string dataset, string savedir) 
 {
-	//string dir(".\\object\\");
-	string dir("C:\\Users\\IDLER\\Documents\\HUMAN++\\DATASET\\Body\\");
-	vector<string> objects = { "human", "background" };
-	//vector<string> objects = { "Background", "bottle", "cup", "teapot", "cupnoodle","can" };
-	//vector<string> objects = {  "bottle", "cup", "teapot", "cupnoodle", "can" };
+	// get names
+	clock_t start, end;
+	vector<string> objects = getSubdirName(dataset);
+	// extract HOG feature from data
+	MESSAGE_COUT("INFO", "Loading data and extract HOG feature ...");
+	start = clock();
 	map<string, int> name2num;
 	int cnt = 0;
 	for (auto o : objects){
 		name2num[o] = cnt;
-		getDataSet(dir + o, cnt++);
+		getDataSet(dataset + o, cnt++);
 	}
-	// Construct TrainData
+	end = clock();
+	MESSAGE_COUT("INFO", "Take " << 1.0*(end - start) / CLOCKS_PER_SEC << "s");
+	// initialize svm parameters
 	TermCriteria criteria = TermCriteria(CV_TERMCRIT_EPS, 200, FLT_EPSILON);
 	svm_->setType(cv::ml::SVM::C_SVC);
 	svm_->setKernel(cv::ml::SVM::LINEAR);
@@ -249,7 +241,7 @@ void Classification::crossValidation(int k)
 	random_shuffle(myseq.begin(), myseq.end());
 	int total = myseq.size();
 	int batch = total / k;
-	// batch
+	// k-validation
 	vector<double> correct;
 	for (int epoch = 0; epoch < k; epoch++){
 		//training
@@ -272,12 +264,12 @@ void Classification::crossValidation(int k)
 		}
 		Ptr<cv::ml::TrainData> trainData = cv::ml::TrainData::create(traintmp, cv::ml::ROW_SAMPLE, labeltrain);
 		bool flag = svm_->train(trainData);
-		svm_->save(".\\classifier\\" + to_string(epoch) + ".xml");
+		if (savedir.size())
+			svm_->save(savedir + to_string(epoch + 1) + ".xml");
 		// testing
 		int error = 0;
 		Mat res = Mat::zeros(testtmp.rows, 1, CV_32FC1);
 		svm_->predict(testtmp, res);
-		//cout << labeltest << endl;
 		vector<int> category(name2num.size(), 0);
 		vector<int> errors(name2num.size(), 0);
 		for (int i = 0; i < res.rows; i++){
@@ -289,20 +281,24 @@ void Classification::crossValidation(int k)
 				error++;
 			}
 		}
-		for (auto o : objects)
-			printf("[%-10s]\t", o.c_str());
-		cout << endl;
+		// calculate errors
+		MESSAGE_COUT(epoch + 1, "");
 		for (int i = 0; i < category.size(); i++)
-			printf("%4d/%-4d\t", errors[i], category[i]);
+			MESSAGE_COUT(objects[i], errors[i] << "/" << category[i]);
+		MESSAGE_COUT("Total", error << "/" << res.rows);
 		correct.push_back(1 - 1.0*error / res.rows);
-		printf("\n[%2d]\t total:%5d/%-5d\n", epoch + 1, error, res.rows);
 	}
-	double avg = 0.0;
-	for (auto c : correct)
-		avg += c;
-	avg /= correct.size();
-	double var = 0;
-	for (auto c : correct)
-		var += (c - avg)*(c - avg);
-	printf("[%d-Validation]\t%.3lf±%.3lf\n", k, 100 * avg, 100 * sqrt(var));
+	double avg = ([&correct]()->double{
+		double sum = 0;
+		for (auto c : correct)
+			sum += c;
+		return sum / correct.size();
+	})();
+	double var = [&correct,avg]()->double{
+		double tmp = 0;
+		for (auto c : correct)
+			tmp += (c - avg)*(c - avg);
+		return tmp;
+	}();
+	printf("[%d-Validation]\t%.3lf±%.3lf\n", k, avg, sqrt(var));
 }

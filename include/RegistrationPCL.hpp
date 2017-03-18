@@ -14,12 +14,11 @@ namespace _IDLER_{
 		PointCloudT::Ptr grasp; // (new PointCloudNT);
 		float leaf;
 	};
-	typedef vector<Object> Objects;
 
 	/**
 	* @class DesktopObj: 
 	*/
-	class DesktopObj{
+	class Objects{
 	public:
 		/**
 		* @brief DesktopObj: put the models and grasp points cloud in directory "./models/xxx/"
@@ -27,7 +26,9 @@ namespace _IDLER_{
 		*					 grasp file as 	"xxx_-grasp-scaled.pcd"
 		* @param catergories	objects, e.g. bottle, cup, can, etc.
 		*/
-		DesktopObj(vector<string> catergories);
+		Objects()
+		{}
+		Objects(vector<string> catergories);
 		/**
 		* @brief []: get MyObject from string/int
 		* @param query	object name / object index
@@ -46,7 +47,7 @@ namespace _IDLER_{
 		*/
 		int load_(Object &mobj);
 	private:
-		Objects objects_; //MyObject's vector 
+		vector<Object> objects_; //MyObject's vector 
 		map<string, int> name2index_; //mapping name to index
 		float leaf; // Down sampling with leaf size
 	};
@@ -63,7 +64,7 @@ namespace _IDLER_{
 		{}
 
 		// Preparation
-		int Preparation(string model_path, string grasp_path);
+		int Preparation();
 		// Apply
 		Matrix4f Apply(PointCloudNT::Ptr &seg);
 

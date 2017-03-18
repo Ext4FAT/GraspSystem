@@ -6,9 +6,9 @@
 using std::pair;
 using namespace _IDLER_;
 
-DesktopObj::DesktopObj(vector<string> catergories)
+Objects::Objects(vector<string> catergories)
 {
-	static string prefix = ".//mdoels//";
+	static string prefix = "..//mdoels//";
 	static string suffix_grasp = "-grasp-scaled.pcd";
 	static string suffix_model = "-scaled.pcd";
 	int cnt = 0;
@@ -24,7 +24,7 @@ DesktopObj::DesktopObj(vector<string> catergories)
 	}
 }
 
-int DesktopObj::load_(Object &mobj)
+int Objects::load_(Object &mobj)
 {
 	//Load 3D Model
 	if (!LoadModel(mobj.model_path, mobj.model)){

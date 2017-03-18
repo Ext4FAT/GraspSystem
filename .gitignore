@@ -6,6 +6,7 @@
 models/
 classifier/
 chess/
+dataset/
 
 # User-specific files
 *.suo
