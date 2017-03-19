@@ -29,6 +29,10 @@ inline double DX(const vector<T> &statistics) {
 Classification::Classification()
 {
     svm_ = SVM::create();
+	TermCriteria criteria = TermCriteria(CV_TERMCRIT_EPS, 200, FLT_EPSILON);
+	svm_->setType(cv::ml::SVM::C_SVC);
+	svm_->setKernel(cv::ml::SVM::LINEAR);
+	svm_->setTermCriteria(criteria);
 }
 
 Classification::Classification(const string model_path)
@@ -49,11 +53,11 @@ inline void Classification::clearALL()
 	releaseTrainSet();
 }
 
-bool Classification::loadModel(const string model_path)
+inline bool Classification::loadModel(const string xmlpath)
 {
     bool flag = true;
     try{
-        svm_ = Algorithm::load<SVM>(model_path);
+		svm_ = Algorithm::load<SVM>(xmlpath);
     }
     catch (std::exception e){
 		MESSAGE_COUT("ERROR", e.what());
@@ -61,6 +65,19 @@ bool Classification::loadModel(const string model_path)
     }
     return flag;
 }
+inline bool Classification::operator<< (string xmlPath){
+	return loadModel(xmlPath);
+}
+
+inline void Classification::saveModel(const string xmlpath)
+{
+	svm_->save(xmlpath);
+}
+inline void Classification::operator>> (string xmlPath){
+	saveModel(xmlPath);
+}
+
+
 
 Mat Classification::extractFeature(Mat Img, Size mrs)
 {
@@ -237,7 +254,7 @@ vector<int> getRand(int n)
 }
 
 
-void _IDLER_::Classification::crossValidation(int k, string dataset, string savedir) 
+void Classification::crossValidation(int k, string dataset, string savedir) 
 {
 	// get names
 	clock_t start, end;
@@ -253,11 +270,6 @@ void _IDLER_::Classification::crossValidation(int k, string dataset, string save
 	}
 	end = clock();
 	MESSAGE_COUT("INFO", trainMat_.rows << " samples take " << 1.0*(end - start) / CLOCKS_PER_SEC << "s");
-	// initialize svm parameters
-	TermCriteria criteria = TermCriteria(CV_TERMCRIT_EPS, 200, FLT_EPSILON);
-	svm_->setType(cv::ml::SVM::C_SVC);
-	svm_->setKernel(cv::ml::SVM::LINEAR);
-	svm_->setTermCriteria(criteria);
 	// get random sequence
 	int total = 0;
 	vector<int> myseq(trainMat_.rows);
@@ -288,7 +300,7 @@ void _IDLER_::Classification::crossValidation(int k, string dataset, string save
 		Ptr<cv::ml::TrainData> trainData = cv::ml::TrainData::create(traintmp, cv::ml::ROW_SAMPLE, labeltrain);
 		bool flag = svm_->train(trainData);
 		if (savedir.size())
-			svm_->save(savedir + to_string(epoch + 1) + ".xml");
+			saveModel(savedir + to_string(epoch + 1) + ".xml");
 		// testing
 		start = clock();
 		int error = 0;

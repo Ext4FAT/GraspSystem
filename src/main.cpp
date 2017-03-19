@@ -7,7 +7,7 @@
 int main(int argc, char** argv)
 {
 	GraspSystem data(640, 480, 30);
-	data.dobotCTRL();
+	//data.dobotCTRL();
 
 
 	//_IDLER_::Classification classifier;

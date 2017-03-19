@@ -14,10 +14,11 @@ using cv::ml::SVM;
 typedef HOGDescriptor MyFeature;
 typedef SVM MyClassifier;
 
-/*******************************************************************************
-*   Label image data with path when testing, output which image error          *
-*******************************************************************************/
+
 namespace _IDLER_{
+	/*******************************************************************************
+	*   Label image data with path when testing, output which image error          *
+	*******************************************************************************/
 	class GroundTruth {
 	public:
 		int label;
@@ -74,11 +75,6 @@ namespace _IDLER_{
 		map<string, int> name2index;
 	};
 
-
-	class DataSeq {
-
-	};
-
 	/*******************************************************************************
 	*   Utilize HOG as feature, and SVM as machine learning model.				   *
 	*******************************************************************************/
@@ -88,16 +84,19 @@ namespace _IDLER_{
 		/** @brief default constructor */
 		Classification();
 		/**
-		 * @brief Classification: load xml file as model
+		 * @brief Classification: load/save xml file as model
 		 * @param model_path    xml loacation
 		 */
 		Classification(const string model_path);
 		/**
-		 * @brief loadModel: load xml file as model
-		 * @param model_path    xml loacation
+		 * @brief [load/save]Model: load/save xml file as model, and operator overload
+		 * @param model_path    xml location
 		 * @return success/ fail
 		 */
-		bool loadModel(const string model_path);
+		inline bool loadModel(const string xmlpath);
+		inline bool operator<<(string xmlPath);
+		inline void saveModel(const string xmlpath);		
+		inline void operator>>(string xmlPath);
 		/**
 		 * @brief extractFeature: extract HOG feature
 		 * @param Img   input source
@@ -179,7 +178,6 @@ namespace _IDLER_{
 		const Category& category(){
 			return catergory_;
 		}
-
 		const Ptr<SVM>& svm() {
 			return svm_;
 		}
@@ -189,8 +187,8 @@ namespace _IDLER_{
 		Category catergory_;
 		Mat trainMat_;
 		Mat labels_;
+		Size hog_ = { 64, 128 };
 		//Size hog_ = { 64, 64 };
 		//Size hog_ = { 80, 80 };
-		Size hog_ = { 64, 128 };
 	};
 }
