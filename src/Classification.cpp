@@ -2,6 +2,30 @@
 #include "Macro.hpp"
 using namespace _IDLER_;
 
+/////////////////////////////////////////////////////////
+template<typename T>
+inline double  EX(const vector<T> &statistics) {
+	T sum = 0;
+	for (auto c : statistics)
+		sum += c;
+	return 1.0*sum / statistics.size();
+}
+
+template<typename T>
+inline double  EX2(const vector<T> &statistics) {
+	T sum = 0;
+	for (auto c : statistics)
+		sum += c*c;
+	return 1.0*sum / statistics.size();
+}
+template<typename T>
+inline double DX(const vector<T> &statistics) {
+	double ex = EX(statistics);
+	return EX2(statistics) - ex*ex;
+}
+/////////////////////////////////////////////////////////////
+
+
 Classification::Classification()
 {
     svm_ = SVM::create();
@@ -288,17 +312,9 @@ void _IDLER_::Classification::crossValidation(int k, string dataset, string save
 		MESSAGE_COUT("Total", error << "/" << res.rows);
 		correct.push_back(1 - 1.0*error / res.rows);
 	}
-	double avg = ([&correct]()->double{
-		double sum = 0;
-		for (auto c : correct)
-			sum += c;
-		return sum / correct.size();
-	})();
-	double var = [&correct,avg]()->double{
-		double tmp = 0;
-		for (auto c : correct)
-			tmp += (c - avg)*(c - avg);
-		return tmp;
-	}();
+	double avg = EX(correct);
+	double var = EX2(correct) - avg*avg;
+	for (auto c : correct)
+		cout << c << endl;
 	printf("[%d-Validation]\t%.3lf±%.3lf\n", k, avg, sqrt(var));
 }
