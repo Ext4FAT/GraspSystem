@@ -243,7 +243,7 @@ void _IDLER_::Classification::crossValidation(int k, string dataset, string save
 	clock_t start, end;
 	vector<string> objects = getSubdirName(dataset);
 	// extract HOG feature from data
-	MESSAGE_COUT("INFO", "Loading data and extract HOG feature ...");
+	MESSAGE_COUT("INFO", "Loading data and extract " << hog_ << " HOG feature ...");
 	start = clock();
 	map<string, int> name2num;
 	int cnt = 0;
@@ -252,19 +252,18 @@ void _IDLER_::Classification::crossValidation(int k, string dataset, string save
 		getDataSet(dataset + o, cnt++);
 	}
 	end = clock();
-	MESSAGE_COUT("INFO", "Take " << 1.0*(end - start) / CLOCKS_PER_SEC << "s");
+	MESSAGE_COUT("INFO", trainMat_.rows << " samples take " << 1.0*(end - start) / CLOCKS_PER_SEC << "s");
 	// initialize svm parameters
 	TermCriteria criteria = TermCriteria(CV_TERMCRIT_EPS, 200, FLT_EPSILON);
 	svm_->setType(cv::ml::SVM::C_SVC);
 	svm_->setKernel(cv::ml::SVM::LINEAR);
 	svm_->setTermCriteria(criteria);
 	// get random sequence
-	vector<int> myseq;
-	for (int i = 0; i < trainMat_.rows; i++)
-		myseq.push_back(i);
+	int total = 0;
+	vector<int> myseq(trainMat_.rows);
+	generate(myseq.begin(), myseq.end(), [&total](){return total++; });
 	random_shuffle(myseq.begin(), myseq.end());
-	int total = myseq.size();
-	int batch = total / k;
+	int batch = total / k + (total%k != 0);
 	// k-validation
 	vector<double> correct;
 	for (int epoch = 0; epoch < k; epoch++){
@@ -291,6 +290,7 @@ void _IDLER_::Classification::crossValidation(int k, string dataset, string save
 		if (savedir.size())
 			svm_->save(savedir + to_string(epoch + 1) + ".xml");
 		// testing
+		start = clock();
 		int error = 0;
 		Mat res = Mat::zeros(testtmp.rows, 1, CV_32FC1);
 		svm_->predict(testtmp, res);
@@ -305,16 +305,17 @@ void _IDLER_::Classification::crossValidation(int k, string dataset, string save
 				error++;
 			}
 		}
+		end = clock();
 		// calculate errors
 		MESSAGE_COUT(epoch + 1, "");
 		for (int i = 0; i < category.size(); i++)
 			MESSAGE_COUT(objects[i], errors[i] << "/" << category[i]);
-		MESSAGE_COUT("Total", error << "/" << res.rows);
+		MESSAGE_COUT("Total", error << "/" << res.rows << ", take " << 1.0*(end - start) / CLOCKS_PER_SEC << "s");
 		correct.push_back(1 - 1.0*error / res.rows);
 	}
 	double avg = EX(correct);
 	double var = EX2(correct) - avg*avg;
 	for (auto c : correct)
 		cout << c << endl;
-	printf("[%d-Validation]\t%.3lf±%.3lf\n", k, avg, sqrt(var));
+	printf("[%d-Validation]\t%.3lf+/-%.3lf\n", k, avg, sqrt(var));//±
 }

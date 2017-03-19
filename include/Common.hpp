@@ -30,4 +30,6 @@ using std::swap;
 using std::cout;
 using std::endl;
 using std::to_string;
+using std::generate;
+using std::generate_n;
 using std::random_shuffle;

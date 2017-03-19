@@ -1,8 +1,6 @@
 #include "FileOperation.hpp"
-
+#include "Common.hpp"
 #include <windows.h>
-#include <vector>
-#include <string>
 
 //Get current dir filepath
 std::vector<std::string> FileOperation::getCurdirFilePath(std::string dirPath)
@@ -58,9 +56,6 @@ std::vector<std::string> FileOperation::getSubdirName(std::string dirPath)
 //Get file name from file path;
 std::string FileOperation::findFileName(std::string path)
 {
-	int i, last;
-	for (i = 0; path[i]; i++)
-		if (path[i] == '\\')
-			last = i;
-	return path.substr(last + 1);
+	int pos = path.find_last_of('\\');
+	return path.substr(pos + 1);
 }

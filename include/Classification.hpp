@@ -189,6 +189,8 @@ namespace _IDLER_{
 		Category catergory_;
 		Mat trainMat_;
 		Mat labels_;
-		Size hog_ = { 64, 64 };
+		//Size hog_ = { 64, 64 };
+		//Size hog_ = { 80, 80 };
+		Size hog_ = { 64, 128 };
 	};
 }
