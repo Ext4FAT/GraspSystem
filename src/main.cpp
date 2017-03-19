@@ -1,4 +1,5 @@
 #include "GraspSystem.hpp"
+#include "Classification.hpp"
 #include <windows.h>
 
 
@@ -6,12 +7,12 @@
 
 int main(int argc, char** argv)
 {
-	GraspSystem data(640, 480, 30);
+	//GraspSystem data(640, 480, 30);
 	//data.dobotCTRL();
 
 
-	//_IDLER_::Classification classifier;
-	//classifier.crossValidation(10, "..\\dataset\\Body\\");
+	_IDLER_::Classification classifier;
+	classifier.crossValidation(10, "..\\dataset\\Body\\");
 
 
 
