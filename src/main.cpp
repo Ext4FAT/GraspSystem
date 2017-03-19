@@ -3,6 +3,9 @@
 #include <windows.h>
 
 
+
+
+
 int main(int argc, char** argv)
 {
 	//WinExec(("C:\\Users\\IDLER\\Documents\\GitHub\\MechanicalArm\\Release\\MechanicalArm.exe"), SW_MAXIMIZE);
@@ -11,7 +14,7 @@ int main(int argc, char** argv)
 	//data.dobotCTRL();
 
 	_IDLER_::Classification classifier;
-	classifier.crossValidation(10);
+	classifier.crossValidation(10, "..\\dataset\\Body\\");
 
 	return 1;
 }

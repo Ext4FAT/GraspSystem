@@ -1,6 +1,10 @@
 /*******************************************************************************
 	Some efficient macros
 *******************************************************************************/
+
+#define SUM(_V_) std::accumulate(_V_.begin(), _V_.end(), 0);
+//#define SUM(_V_, _F_) std::accumulate(_V_.begin(), _V_.end(), 0, _F_);
+
 #define DIR_NOEXIST_AND_CREATE(_DIR_)	\
 		system(("mkdir " + _DIR_).c_str())	
 
