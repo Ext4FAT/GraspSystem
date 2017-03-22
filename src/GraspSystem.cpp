@@ -5,137 +5,139 @@
 #include "Socket.hpp" 
 #include <opencv2\core.hpp>
 
-#include "Registration_.h"
-#pragma comment(lib,"../dll/Registration.lib") 
-
-#include <pcl/common/transforms.h>
+//#include "Registration_.h"
+//#pragma comment(lib,"../dll/Registration.lib") 
+//
+//#include <pcl/common/transforms.h>
 
 
 using namespace _IDLER_;
 
 
-typedef vector<PXCPointF32> PXC2DPointSet;
-class Reflect_Result {
-public:
-	bool isEmpty(){
-		return model.size() == 0 && grasp.size() == 0;
-	}
-public:
-	PXC2DPointSet model;
-	PXC2DPointSet grasp;
-};
-
-Rect myBoundBox(const vector<PXCPointF32> &pointset)
-{
-	//static Point extend(5, 5);
-	Point pmax(0, 0), pmin(0x7fffffff, 0x7fffffff);
-	for (auto p : pointset) {
-		if (p.x > pmax.x) pmax.x = p.x;
-		if (p.x < pmin.x) pmin.x = p.x;
-		if (p.y > pmax.y) pmax.y = p.y;
-		if (p.y < pmin.y) pmin.y = p.y;
-	}
-	return Rect(pmin, pmax);
-}
 
 
-
-
-// Convert Realsense's PXC to PCL's PointCloud
-size_t PXC2PCL(PointSet &pSet, vector<PXCPoint3DF32> &vertices, PointCloudNT::Ptr &scene, float scale = 1.f / 300.f)
-{
-	for (auto& p : pSet) {
-		p += p;
-		PXCPoint3DF32 ppp = vertices[p.y * 640 + p.x];
-		scene->push_back(PointNT());
-		PointNT& ps = scene->back();
-		ps.x = ppp.x*scale;
-		ps.y = ppp.y*scale;
-		ps.z = ppp.z*scale;
-	}
-	return scene->size();
-}
-
-// genRegistration
-Reflect_Result genRegistrationResult(	PXCProjection *projection,
-										PointCloudNT::Ptr &model,
-										PointCloudT::Ptr &grasp,
-										PointSet &segment,
-										vector<PXCPoint3DF32> &vertices,
-										double scale,
-										RegisterParameter &para)
-{
-	//generate Point Cloud
-	PointCloudNT::Ptr mesh(new PointCloudNT);
-	PointCloudNT::Ptr model_align(new PointCloudNT);
-	PointCloudT::Ptr grasp_align(new PointCloudT);
-	size_t sz = PXC2PCL(segment, vertices, mesh, 1.0 / scale);
-	MESSAGE_COUT("INFO", "Generate Point Cloud: " << sz);
-	//Alignment
-	Matrix4f transformation;
-	transformation = RegistrationNoShow(model, mesh, model_align, para);
-	if (transformation == Matrix4f::Identity()) //Alignment failed 
-		return{};
-	pcl::transformPointCloud(*grasp, *grasp_align, transformation);
-	//Reflect
-	Reflect_Result show2d;
-	show2d.model.resize(model_align->size());
-	show2d.grasp.resize(grasp_align->size());
-	vector<PXCPoint3DF32> result;
-	for (auto &pc : *model_align) {
-		result.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
-	}
-	projection->ProjectCameraToDepth(result.size(), &result[0], &show2d.model[0]);
-	result.clear();
-	for (auto &pc : *grasp_align) {
-		result.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
-	}
-	projection->ProjectCameraToDepth(result.size(), &result[0], &show2d.grasp[0]);
-	return show2d;
-}
-
-
-
-// show registration image
-void showRegistrationResult(const vector<PXCPointF32> &show2d, Mat &img, Vec3b color)
-{
-	for (auto p : show2d) {
-		Point pp(p.x, p.y);
-		if (pp.inside(Rect(0, 0, 640, 480))) {
-			img.at<Vec3b>(pp) = color;
-		}
-	}
-	imshow("reflect", img);
-}
-
-bool Reflect(	long framecnt,
-	string name,
-	Mat& img,
-	PXCProjection *projection,
-	PointCloudNT::Ptr &model,
-	PointCloudT::Ptr &grasp,
-	PointSet &segment,
-	vector<PXCPoint3DF32> &vertices,
-	double scale,
-	RegisterParameter &para)
-{
-	MESSAGE_COUT("[" << framecnt << "]", name);
-	Mat color = img.clone();
-	//vector<PXCPointF32> show2d = genRegistrationResult(projection_, model, myseg, vertices, PointCloudScale, leaf);
-
-	Reflect_Result show2d = genRegistrationResult(projection, model, grasp, segment, vertices, scale, para);
-
-	if (!show2d.isEmpty()) {
-		/*static variable*/
-		static Rect __range__ = { 0, 0, 640, 480 };
-		Rect boundbox = myBoundBox(show2d.grasp);
-		boundbox &= __range__;
-		rectangle(color, boundbox, Scalar(255, 0, 0), 2);
-		showRegistrationResult(show2d.model, color, Vec3b(255, 0, 255));
-		showRegistrationResult(show2d.grasp, color, Vec3b(0, 255, 255));
-		return true;
-	}
-}
+//typedef vector<PXCPointF32> PXC2DPointSet;
+//class Reflect_Result {
+//public:
+//	bool isEmpty(){
+//		return model.size() == 0 && grasp.size() == 0;
+//	}
+//public:
+//	PXC2DPointSet model;
+//	PXC2DPointSet grasp;
+//};
+//
+//Rect myBoundBox(const vector<PXCPointF32> &pointset)
+//{
+//	//static Point extend(5, 5);
+//	Point pmax(0, 0), pmin(0x7fffffff, 0x7fffffff);
+//	for (auto p : pointset) {
+//		if (p.x > pmax.x) pmax.x = p.x;
+//		if (p.x < pmin.x) pmin.x = p.x;
+//		if (p.y > pmax.y) pmax.y = p.y;
+//		if (p.y < pmin.y) pmin.y = p.y;
+//	}
+//	return Rect(pmin, pmax);
+//}
+//
+//
+//
+//
+//// Convert Realsense's PXC to PCL's PointCloud
+//size_t PXC2PCL(PointSet &pSet, vector<PXCPoint3DF32> &vertices, PointCloudNT::Ptr &scene, float scale = 1.f / 300.f)
+//{
+//	for (auto& p : pSet) {
+//		p += p;
+//		PXCPoint3DF32 ppp = vertices[p.y * 640 + p.x];
+//		scene->push_back(PointNT());
+//		PointNT& ps = scene->back();
+//		ps.x = ppp.x*scale;
+//		ps.y = ppp.y*scale;
+//		ps.z = ppp.z*scale;
+//	}
+//	return scene->size();
+//}
+//
+//// genRegistration
+//Reflect_Result genRegistrationResult(	PXCProjection *projection,
+//										PointCloudNT::Ptr &model,
+//										PointCloudT::Ptr &grasp,
+//										PointSet &segment,
+//										vector<PXCPoint3DF32> &vertices,
+//										double scale,
+//										RegisterParameter &para)
+//{
+//	//generate Point Cloud
+//	PointCloudNT::Ptr mesh(new PointCloudNT);
+//	PointCloudNT::Ptr model_align(new PointCloudNT);
+//	PointCloudT::Ptr grasp_align(new PointCloudT);
+//	size_t sz = PXC2PCL(segment, vertices, mesh, 1.0 / scale);
+//	MESSAGE_COUT("INFO", "Generate Point Cloud: " << sz);
+//	//Alignment
+//	Matrix4f transformation;
+//	transformation = RegistrationNoShow(model, mesh, model_align, para);
+//	if (transformation == Matrix4f::Identity()) //Alignment failed 
+//		return{};
+//	pcl::transformPointCloud(*grasp, *grasp_align, transformation);
+//	//Reflect
+//	Reflect_Result show2d;
+//	show2d.model.resize(model_align->size());
+//	show2d.grasp.resize(grasp_align->size());
+//	vector<PXCPoint3DF32> result;
+//	for (auto &pc : *model_align) {
+//		result.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
+//	}
+//	projection->ProjectCameraToDepth(result.size(), &result[0], &show2d.model[0]);
+//	result.clear();
+//	for (auto &pc : *grasp_align) {
+//		result.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
+//	}
+//	projection->ProjectCameraToDepth(result.size(), &result[0], &show2d.grasp[0]);
+//	return show2d;
+//}
+//
+//
+//
+//// show registration image
+//void showRegistrationResult(const vector<PXCPointF32> &show2d, Mat &img, Vec3b color)
+//{
+//	for (auto p : show2d) {
+//		Point pp(p.x, p.y);
+//		if (pp.inside(Rect(0, 0, 640, 480))) {
+//			img.at<Vec3b>(pp) = color;
+//		}
+//	}
+//	imshow("reflect", img);
+//}
+//
+//bool Reflect(	long framecnt,
+//	string name,
+//	Mat& img,
+//	PXCProjection *projection,
+//	PointCloudNT::Ptr &model,
+//	PointCloudT::Ptr &grasp,
+//	PointSet &segment,
+//	vector<PXCPoint3DF32> &vertices,
+//	double scale,
+//	RegisterParameter &para)
+//{
+//	MESSAGE_COUT("[" << framecnt << "]", name);
+//	Mat color = img.clone();
+//	//vector<PXCPointF32> show2d = genRegistrationResult(projection_, model, myseg, vertices, PointCloudScale, leaf);
+//
+//	Reflect_Result show2d = genRegistrationResult(projection, model, grasp, segment, vertices, scale, para);
+//
+//	if (!show2d.isEmpty()) {
+//		/*static variable*/
+//		static Rect __range__ = { 0, 0, 640, 480 };
+//		Rect boundbox = myBoundBox(show2d.grasp);
+//		boundbox &= __range__;
+//		rectangle(color, boundbox, Scalar(255, 0, 0), 2);
+//		showRegistrationResult(show2d.model, color, Vec3b(255, 0, 255));
+//		showRegistrationResult(show2d.grasp, color, Vec3b(0, 255, 255));
+//		return true;
+//	}
+//}
 
 
 
@@ -231,7 +233,7 @@ int GraspSystem::releaseRealsense()
 
 
 //Query Realsense data
-int GraspSystem::acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud)
+int GraspSystem::acquireRealsenseData(Mat &color, Mat &depth, Mat &display, vector<PXCPoint3DF32> &pointscloud)
 {
 	sample_ = pxcsm_->QuerySample();
 	pxcdepth_ = sample_->depth;
@@ -239,15 +241,13 @@ int GraspSystem::acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF
 	pxcdepth_ = projection_->CreateDepthImageMappedToColor(pxcdepth_, pxccolor_);
 	depth = PXCImage2Mat(pxcdepth_);
 	color = PXCImage2Mat(pxccolor_);
-	//// Generate and Show 3D Point Cloud
-	//pxcStatus sts = projection_->QueryVertices(pxcdepth_, &pointscloud[0]);
-	//if (sts >= PXC_STATUS_NO_ERROR) {
-	//	PXCImage* drawVertices = dw_.DepthToWorldByQueryVertices(pointscloud, pxcdepth_);
-	//	if (drawVertices){
-	//		Mat display = PXCImage2Mat(drawVertices);
-	//		imshow("display", display);
-	//	}
-	//}
+	// Generate and Show 3D Point Cloud
+	pxcStatus sts = projection_->QueryVertices(pxcdepth_, &pointscloud[0]);
+	if (sts >= PXC_STATUS_NO_ERROR) {
+		PXCImage* drawVertices = dw_.DepthToWorldByQueryVertices(pointscloud, pxcdepth_);
+		if (drawVertices)
+			display = PXCImage2Mat(drawVertices);
+	}
 	return 0;
 }
 
@@ -322,6 +322,7 @@ void GraspSystem::placeWindows(int topk)
 {
 	cv::namedWindow("depth");
 	cv::namedWindow("color");
+	cv::namedWindow("pointscloud");
 	//cv::namedWindow("before merging");
 	cv::namedWindow("segmentation");
 	//cv::namedWindow("classification");
@@ -329,9 +330,11 @@ void GraspSystem::placeWindows(int topk)
 	cv::moveWindow("color", 0, 0);
 	cv::moveWindow("depth", 640, 0);
 	cv::moveWindow("segmentation", 0, 520);
+	cv::moveWindow("regions", 320, 520);
+	cv::moveWindow("pointscloud", 640, 520);
 	//cv::moveWindow("before-merging", 320, );
 	//cv::moveWindow("classification", 350, 300);
-	cv::moveWindow("regions", 320, 520);
+	
 	for (int k = 0; k < topk; k++) {
 		cv::namedWindow(to_string(k));
 		cv::moveWindow(to_string(k), (k + 2) * 350, 300);
@@ -379,13 +382,17 @@ int GraspSystem::registration()
 int GraspSystem::Grasp()
 {
 	clock_t start, end;
-	Mat depth2, color2;
+	Mat depth2, color2, display2;
 	// configure segmentation
 	Size segSize(320, 240);
 	unsigned topk = 6;
 	short threshold = 2;
 	Segmentation myseg(segSize, topk, threshold);
 	// configure classification
+	Classification classifier("..\\classifier\\object.xml");
+	classifier.setCategory({ "background", "cup" });
+	static vector<Scalar> drawColor = { Scalar(255, 0, 0), Scalar(0, 0, 255) };
+
 	while (1){
 		start = clock();
 		//////////////////////////////////////////////
@@ -393,6 +400,7 @@ int GraspSystem::Grasp()
 		myWait_.wait(lk);
 		resize(color_, color2, segSize);
 		resize(depth_, depth2, segSize);
+		resize(pcdisp_, display2, segSize);
 		//color_ = depth_ = 0;
 		lk.unlock();
 		/////////////////////////////////////////////
@@ -401,23 +409,30 @@ int GraspSystem::Grasp()
 		// segmentation
 		myseg.Segment(depth2, color2);
 		const SegmentSet &mainSeg = myseg.mainSegmentation();
+		// classification
+		Category categories = classifier.category();
 		vector<Rect> candidates;
 		for (auto ms : mainSeg){
 			Rect r = boundingRect(ms);
-			candidates.push_back(r);
-			//rectangle(color2, r, Scalar(0, 0, 255), 2);
+			Mat roi = color2(r);
+			int p = classifier.predict(roi);
+			if (p){
+				candidates.push_back(r);
+			}
+			rectangle(color2, r, drawColor[p], 2);
+				//putText(color2, categories[p], r.tl(), 1, 1, Scalar(255, 0, 0));
+			//}
 		}
-		// classification
+		imshow("regions", color2);
+		// generate points cloud
+		for (auto c : candidates){
+			Mat ROI;
+			Mat mask = Mat::zeros(segSize, CV_8UC1);
+			mask(c).setTo(255);
+			display2.copyTo(ROI, mask);
+			imshow("pointscloud", ROI);
+		}
 
-
-		
-		//double time = 1.0*(end - start) / CLOCKS_PER_SEC;
-		//string curfps = "FPS:" + to_string((int)(1 / time));
-		//cv::putText(color2, curfps, { 0, 26 }, 2, 1.0, Scalar(0, 0, 0), 2);
-		//imshow("regions", color2);
-
-		// classification
-		//vector<Rect> filter = classification(regions);
 		myseg.clear();
 		waitKey(1);
 	}
@@ -430,7 +445,7 @@ int GraspSystem::captureFrame()
 {
 	// Define variable
 	clock_t start, end;
-	Mat color, depth;
+	Mat color, depth, display;
 	vector<PXCPoint3DF32> pointscloud(camera_.height*camera_.width);
 	// Configure RealSense
 	configureRealsense();
@@ -447,11 +462,13 @@ int GraspSystem::captureFrame()
 			break;
 		// Query the realsense color and depth, and pointscloud
 		start = clock();
-		acquireRealsenseData(color, depth, pointscloud);
+		acquireRealsenseData(color, depth, display, pointscloud);
 		// Critical area  /////////////////////
 		std::lock_guard<mutex> lck(myLock_);
 		color_ = color.clone();
 		depth_ = depth.clone();
+		pcdisp_ = display.clone();
+		pointscloud_ = pointscloud;
 		myWait_.notify_all();
 		///////////////////////////////////////////
 		// Keyboard commands parse

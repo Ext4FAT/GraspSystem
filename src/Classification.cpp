@@ -65,7 +65,7 @@ Mat Classification::extractFeature(Mat Img, Size mrs)
     return Mat(descriptors).t();
 }
 
-int Classification::getCategory(vector<string> &subdirs)
+int Classification::setCategory(vector<string> subdirs)
 {
 	catergory_(subdirs);
 	return catergory_.size();
@@ -209,7 +209,7 @@ float Classification::EndToEnd(string data_path)
 {
 	//Trainset path
 	vector<string> subdirs = getSubdirName(data_path);
-	getCategory(subdirs);
+	setCategory(subdirs);
 	//Get trainset
 	for (auto &subdir : subdirs) {
 		vector<string> imgpaths = getCurdirFilePath(data_path + subdir + "\\");

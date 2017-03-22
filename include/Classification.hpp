@@ -109,7 +109,7 @@ namespace _IDLER_{
 		* @param subdirs	categorynames
 		* @return			category number
 		*/
-		int getCategory(vector<string> &subdirs);
+		int setCategory(vector<string> subdirs);
 		/**
 		 * @brief getDataSet: get dataset
 		 * @param data_path     image location
@@ -187,8 +187,8 @@ namespace _IDLER_{
 		Category catergory_;
 		Mat trainMat_;
 		Mat labels_;
-		Size hog_ = { 64, 128 };
+		//Size hog_ = { 64, 128 };
 		//Size hog_ = { 64, 64 };
-		//Size hog_ = { 80, 80 };
+		Size hog_ = { 80, 80 };
 	};
 }

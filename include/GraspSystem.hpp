@@ -21,7 +21,7 @@ public:
 	GraspSystem(int width, int height, float fps = 30);
 	int configureRealsense();
 	int releaseRealsense();
-	int acquireRealsenseData(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud);
+	int acquireRealsenseData(Mat &color, Mat &depth, Mat &display, vector<PXCPoint3DF32> &pointscloud);
 	int captureFrame();
 	int dobotCTRL();
 
@@ -59,6 +59,8 @@ private:
 	//OpenCV
 	Mat color_;
 	Mat depth_;
+	Mat pcdisp_;
+	vector<PXCPoint3DF32> pointscloud_;
 	// ChessBoard
 	bool calibrated_ = false;
 	Size pattern_ = { 3, 3 };
