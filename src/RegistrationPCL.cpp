@@ -8,19 +8,19 @@ using namespace _IDLER_;
 
 Objects::Objects(vector<string> catergories)
 {
-	static string prefix = "..//mdoels//";
+	static string prefix = "..//models//";
 	static string suffix_grasp = "-grasp-scaled.pcd";
 	static string suffix_model = "-scaled.pcd";
 	int cnt = 0;
-	objects_.resize(catergories.size()); // If one load failed, can load the next
+	objects_.resize(catergories.size() + 1); // If one load failed, can load the next
 	for (auto name : catergories){
 		string model_path = prefix + name + suffix_model;
 		string grasp_path = prefix + name + suffix_grasp;
 		PointCloudNT::Ptr m(new PointCloudNT); // (new PointCloudNT);
 		PointCloudT::Ptr g(new PointCloudT); // (new PointCloudNT);
+		name2index_[name] = ++cnt;
 		Object& curobj = objects_[cnt] = { name, model_path, grasp_path, m, g, leaf };
 		load_(curobj);
-		name2index_[name] = ++cnt;
 	}
 }
 
@@ -40,6 +40,22 @@ int Objects::load_(Object &mobj)
 	return 0;
 }
 
+
+int RegistrationPCL::Preparation(vector<string> objs)
+{
+	objects_ = Objects(objs);
+	return 0;
+}
+
+Matrix4f _IDLER_::RegistrationPCL::Apply(PointCloudNT::Ptr &seg, int index)
+{
+	PointCloudNT::Ptr model_align(new PointCloudNT);
+	PointCloudT::Ptr grasp_align(new PointCloudT);
+	//Alignment
+	//Matrix4f transformation = RegistrationNoShow_ICP(objects_[index].model, seg, model_align, para_);
+	Matrix4f transformation = Registration(objects_[index].model, seg, model_align, para_);
+	return transformation;
+}
 
 
 

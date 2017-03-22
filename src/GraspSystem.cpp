@@ -3,13 +3,8 @@
 #include "Opencv.hpp"
 #include "Classification.hpp"
 #include "Socket.hpp" 
+#include "RegistrationPCL.hpp"
 #include <opencv2\core.hpp>
-
-//#include "Registration_.h"
-//#pragma comment(lib,"../dll/Registration.lib") 
-//
-//#include <pcl/common/transforms.h>
-
 
 using namespace _IDLER_;
 
@@ -43,20 +38,20 @@ using namespace _IDLER_;
 //
 //
 //
-//// Convert Realsense's PXC to PCL's PointCloud
-//size_t PXC2PCL(PointSet &pSet, vector<PXCPoint3DF32> &vertices, PointCloudNT::Ptr &scene, float scale = 1.f / 300.f)
-//{
-//	for (auto& p : pSet) {
-//		p += p;
-//		PXCPoint3DF32 ppp = vertices[p.y * 640 + p.x];
-//		scene->push_back(PointNT());
-//		PointNT& ps = scene->back();
-//		ps.x = ppp.x*scale;
-//		ps.y = ppp.y*scale;
-//		ps.z = ppp.z*scale;
-//	}
-//	return scene->size();
-//}
+// Convert Realsense's PXC to PCL's PointCloud
+size_t PXC2PCL(PointSet &pSet, vector<PXCPoint3DF32> &vertices, PointCloudNT::Ptr &scene, float scale = 1.f / 300.f)
+{
+	for (auto& p : pSet) {
+		p += p;
+		PXCPoint3DF32 ppp = vertices[p.y * 640 + p.x];
+		scene->push_back(PointNT());
+		PointNT& ps = scene->back();
+		ps.x = ppp.x*scale;
+		ps.y = ppp.y*scale;
+		ps.z = ppp.z*scale;
+	}
+	return scene->size();
+}
 //
 //// genRegistration
 //Reflect_Result genRegistrationResult(	PXCProjection *projection,
@@ -381,8 +376,10 @@ int GraspSystem::registration()
 
 int GraspSystem::Grasp()
 {
-	clock_t start, end;
+	long framecnt;
+	clock_t start, end, sum;
 	Mat depth2, color2, display2;
+	vector<PXCPoint3DF32> pointscloud;
 	// configure segmentation
 	Size segSize(320, 240);
 	unsigned topk = 6;
@@ -392,8 +389,12 @@ int GraspSystem::Grasp()
 	Classification classifier("..\\classifier\\object.xml");
 	classifier.setCategory({ "background", "cup" });
 	static vector<Scalar> drawColor = { Scalar(255, 0, 0), Scalar(0, 0, 255) };
-
-	while (1){
+	// configure registration
+	RegisterParameter para;
+	RegistrationPCL ransac(para);
+	ransac.Preparation({"papercup"});
+	// loop
+	for (framecnt = 0; 1; framecnt++) {
 		start = clock();
 		//////////////////////////////////////////////
 		std::unique_lock<mutex> lk(myLock_);
@@ -401,38 +402,44 @@ int GraspSystem::Grasp()
 		resize(color_, color2, segSize);
 		resize(depth_, depth2, segSize);
 		resize(pcdisp_, display2, segSize);
+		pointscloud = pointscloud_;
 		//color_ = depth_ = 0;
 		lk.unlock();
 		/////////////////////////////////////////////
 		end = clock();
-
+		//cout << 1.0*(end - start) / CLOCKS_PER_SEC << endl;
+		sum += end - start;
+		if (sum % 10 == 0) {
+			cout << sum / (10.0*CLOCKS_PER_SEC) << endl;
+			sum = 0;
+		}
+		
 		// segmentation
 		myseg.Segment(depth2, color2);
-		const SegmentSet &mainSeg = myseg.mainSegmentation();
+		const SegmentSet& mainSeg = myseg.mainSegmentation();
 		// classification
 		Category categories = classifier.category();
-		vector<Rect> candidates;
 		for (auto ms : mainSeg){
-			Rect r = boundingRect(ms);
+			Rect r = cv::boundingRect(ms);
 			Mat roi = color2(r);
 			int p = classifier.predict(roi);
 			if (p){
-				candidates.push_back(r);
+					Mat ROI;
+					Mat mask = Mat::zeros(segSize, CV_8UC1);
+					mask(r).setTo(255);
+					display2.copyTo(ROI, mask);
+					imshow("pointscloud", ROI);
+					PointCloudNT::Ptr seg(new PointCloudNT);
+					size_t sz = PXC2PCL(ms, pointscloud, seg);
+					MESSAGE_COUT("INFO", "Generate Point Cloud: " << sz);
+					Matrix4f transformation = ransac.Apply(seg, p);
+					MESSAGE_COUT("Transformation Matrix", transformation);
 			}
 			rectangle(color2, r, drawColor[p], 2);
 				//putText(color2, categories[p], r.tl(), 1, 1, Scalar(255, 0, 0));
 			//}
 		}
 		imshow("regions", color2);
-		// generate points cloud
-		for (auto c : candidates){
-			Mat ROI;
-			Mat mask = Mat::zeros(segSize, CV_8UC1);
-			mask(c).setTo(255);
-			display2.copyTo(ROI, mask);
-			imshow("pointscloud", ROI);
-		}
-
 		myseg.clear();
 		waitKey(1);
 	}
