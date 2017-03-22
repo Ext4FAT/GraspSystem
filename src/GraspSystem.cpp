@@ -6,7 +6,34 @@
 #include "RegistrationPCL.hpp"
 #include <opencv2\core.hpp>
 
+//#include <pcl/io/pcd_io.h>
+
 using namespace _IDLER_;
+
+
+int savePCD(const string& outfilename, PointCloudNT::Ptr &myseg)
+{
+	ofstream ofs(outfilename);
+	ofs << "# .PCD v0.7 - Point Cloud Data file format" << endl;
+	ofs << "VERSION 0.7" << endl;
+	ofs << "FIELDS x y z" << endl;
+	ofs << "SIZE 4 4 4" << endl;
+	ofs << "TYPE F F F" << endl;
+	ofs << "COUNT 1 1 1" << endl;
+	ofs << "WIDTH " << myseg->size() << endl;
+	ofs << "HEIGHT 1" << endl;
+	ofs << "VIEWPOINT 0 0 0 1 0 0 0" << endl;
+	ofs << "POINTS " << myseg->size() << endl;
+	ofs << "DATA ascii" << endl;
+	//double scale = 1. / 300;
+	double scale = 1. / 330;
+	//vector<PXCPoint3DF32> obj_cloud;
+	for (auto p : *myseg) {
+		ofs << p.x << " " << p.y << " " << p.z << endl;
+	}
+	ofs.close();
+	return 0;
+}
 
 
 
@@ -34,10 +61,8 @@ using namespace _IDLER_;
 //	}
 //	return Rect(pmin, pmax);
 //}
-//
-//
-//
-//
+
+
 // Convert Realsense's PXC to PCL's PointCloud
 size_t PXC2PCL(PointSet &pSet, vector<PXCPoint3DF32> &vertices, PointCloudNT::Ptr &scene, float scale = 1.f / 300.f)
 {
@@ -430,10 +455,11 @@ int GraspSystem::Grasp()
 					display2.copyTo(ROI, mask);
 					imshow("pointscloud", ROI);
 					PointCloudNT::Ptr seg(new PointCloudNT);
-					size_t sz = PXC2PCL(ms, pointscloud, seg);
-					MESSAGE_COUT("INFO", "Generate Point Cloud: " << sz);
-					Matrix4f transformation = ransac.Apply(seg, p);
-					MESSAGE_COUT("Transformation Matrix", transformation);
+					size_t sz = PXC2PCL(ms, pointscloud, seg, 1 / 330.0);
+					savePCD(to_string(framecnt) + ".pcd", seg);
+					//MESSAGE_COUT("INFO", "Generate Point Cloud: " << sz);
+					//Matrix4f transformation = ransac.Apply(seg, p);
+					//MESSAGE_COUT("Transformation Matrix", transformation);
 			}
 			rectangle(color2, r, drawColor[p], 2);
 				//putText(color2, categories[p], r.tl(), 1, 1, Scalar(255, 0, 0));

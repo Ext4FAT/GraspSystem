@@ -2,6 +2,7 @@
 #include "Macro.hpp"
 #include "Classification.hpp"
 #include <pcl/common/transforms.h>
+#include <pcl/common/io.h>
 
 using std::pair;
 using namespace _IDLER_;

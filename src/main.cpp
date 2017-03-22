@@ -10,6 +10,18 @@ int main(int argc, char** argv)
 	GraspSystem data(640, 480, 30);
 	data.dobotCTRL();
 
+	//Mat color =  imread("C:\\Users\\IDLER\\Desktop\\modelSet\\chessboard.jpg");
+	//cv::imshow("xxx", color);
+	//waitKey(-1);
+	//vector<Point2f> corners;
+	//Mat gray;
+	//cv::cvtColor(color, gray, cv::COLOR_BGR2GRAY);
+	//bool found = cv::findChessboardCorners(gray, { 11, 11 }, corners, 1);
+	//for (auto c : corners){
+	//	cout << c << endl;
+	//}
+
+
 
 	//_IDLER_::Classification classifier;
 	//classifier.crossValidation(10, "..\\dataset\\Object\\");

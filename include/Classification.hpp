@@ -54,6 +54,7 @@ namespace _IDLER_{
 				index2name[index] = sd;
 				index++;
 			}
+			return index - 1;
 		}
 
 		const string& operator[](int index){
