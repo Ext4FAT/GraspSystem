@@ -11,7 +11,7 @@
 using namespace _IDLER_;
 
 
-int savePCD(const string& outfilename, PointCloudNT::Ptr &myseg)
+int savePCD(const string& outfilename, PointCloudNT::Ptr &myseg, double scale = 1. / 330)
 {
 	ofstream ofs(outfilename);
 	ofs << "# .PCD v0.7 - Point Cloud Data file format" << endl;
@@ -25,18 +25,11 @@ int savePCD(const string& outfilename, PointCloudNT::Ptr &myseg)
 	ofs << "VIEWPOINT 0 0 0 1 0 0 0" << endl;
 	ofs << "POINTS " << myseg->size() << endl;
 	ofs << "DATA ascii" << endl;
-	//double scale = 1. / 300;
-	double scale = 1. / 330;
-	//vector<PXCPoint3DF32> obj_cloud;
-	for (auto p : *myseg) {
+	for (auto p : *myseg) 
 		ofs << p.x << " " << p.y << " " << p.z << endl;
-	}
 	ofs.close();
 	return 0;
 }
-
-
-
 
 //typedef vector<PXCPointF32> PXC2DPointSet;
 //class Reflect_Result {
@@ -64,7 +57,7 @@ int savePCD(const string& outfilename, PointCloudNT::Ptr &myseg)
 
 
 // Convert Realsense's PXC to PCL's PointCloud
-size_t PXC2PCL(PointSet &pSet, vector<PXCPoint3DF32> &vertices, PointCloudNT::Ptr &scene, float scale = 1.f / 300.f)
+size_t PXC2PCL(PointSet &pSet, vector<PXCPoint3DF32> &vertices, PointCloudNT::Ptr &scene, double scale = 1.f / 300.f)
 {
 	for (auto& p : pSet) {
 		p += p;
@@ -77,6 +70,7 @@ size_t PXC2PCL(PointSet &pSet, vector<PXCPoint3DF32> &vertices, PointCloudNT::Pt
 	}
 	return scene->size();
 }
+
 //
 //// genRegistration
 //Reflect_Result genRegistrationResult(	PXCProjection *projection,
@@ -158,9 +152,6 @@ size_t PXC2PCL(PointSet &pSet, vector<PXCPoint3DF32> &vertices, PointCloudNT::Pt
 //		return true;
 //	}
 //}
-
-
-
 
 
 //Press Mouse to select point
@@ -250,7 +241,6 @@ int GraspSystem::releaseRealsense()
 	this->pxccolor_->Release();
 	return 1;
 }
-
 
 //Query Realsense data
 int GraspSystem::acquireRealsenseData(Mat &color, Mat &depth, Mat &display, vector<PXCPoint3DF32> &pointscloud)
@@ -449,17 +439,18 @@ int GraspSystem::Grasp()
 			Mat roi = color2(r);
 			int p = classifier.predict(roi);
 			if (p){
-					Mat ROI;
-					Mat mask = Mat::zeros(segSize, CV_8UC1);
-					mask(r).setTo(255);
-					display2.copyTo(ROI, mask);
-					imshow("pointscloud", ROI);
-					PointCloudNT::Ptr seg(new PointCloudNT);
-					size_t sz = PXC2PCL(ms, pointscloud, seg, 1 / 330.0);
-					savePCD(to_string(framecnt) + ".pcd", seg);
-					//MESSAGE_COUT("INFO", "Generate Point Cloud: " << sz);
-					//Matrix4f transformation = ransac.Apply(seg, p);
-					//MESSAGE_COUT("Transformation Matrix", transformation);
+				double scale = 1.0 / 330;
+				Mat ROI;
+				Mat mask = Mat::zeros(segSize, CV_8UC1);
+				mask(r).setTo(255);
+				display2.copyTo(ROI, mask);
+				imshow("pointscloud", ROI);
+				PointCloudNT::Ptr seg(new PointCloudNT);
+				size_t sz = PXC2PCL(ms, pointscloud, seg, scale);
+				savePCD(to_string(framecnt) + ".pcd", seg, scale);
+				//MESSAGE_COUT("INFO", "Generate Point Cloud: " << sz);
+				//Matrix4f transformation = ransac.Apply(seg, p);
+				//MESSAGE_COUT("Transformation Matrix", transformation);
 			}
 			rectangle(color2, r, drawColor[p], 2);
 				//putText(color2, categories[p], r.tl(), 1, 1, Scalar(255, 0, 0));
