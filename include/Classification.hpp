@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FileOperation.hpp"
+#include "Directory.hpp"
 #include "Opencv.hpp"
 
 using cv::HOGDescriptor;
@@ -79,7 +79,7 @@ namespace _IDLER_{
 	/*******************************************************************************
 	*   Utilize HOG as feature, and SVM as machine learning model.				   *
 	*******************************************************************************/
-	class Classification : public FileOperation
+	class Classification : public Directory
 	{
 	public:
 		/** @brief default constructor */

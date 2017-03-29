@@ -3,7 +3,7 @@
 *******************************************************************************/
 #pragma once
 #include <vector>
-class FileOperation{
+class Directory{
 public:
 	virtual std::vector<std::string> getCurdirFilePath(std::string dirPath);
 	virtual std::vector<std::string> getCurdirFileName(std::string dirPath);

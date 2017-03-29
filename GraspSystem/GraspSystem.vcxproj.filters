@@ -57,17 +57,11 @@
     <ClInclude Include="..\include\RealsensePointsCloud.hpp">
       <Filter>Header\Class</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\FileOperation.hpp">
-      <Filter>Header\Class\Virtual</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\MyDraw.hpp">
+    <ClInclude Include="..\include\Directory.hpp">
       <Filter>Header\Class\Virtual</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\FileOperation.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\main.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -84,6 +78,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\src\RegistrationPCL.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Directory.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

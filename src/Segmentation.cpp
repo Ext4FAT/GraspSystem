@@ -51,8 +51,7 @@ void Segmentation::Segment(Mat& depth, Mat& color)
 	// just select top-k
 	mainSeg_.resize(topk_);
 	// show segmentations
-	Mat disp = Mat::zeros(color.size(), CV_8UC3);
-	draw(mainSeg_, disp, colors_);
+	Mat disp = draw();
 	imshow("segmentation", disp);
 	//// calc boundbox
 	//for (auto mr : mainRegions_) {
@@ -222,138 +221,15 @@ void Segmentation::clear()
 	this->boundBoxes_.clear();
 }
 
-void Segmentation::draw(SegmentSet &segment, Mat &disp, vector<Vec3b> &colors)
+Mat _IDLER_::Segmentation::draw()
 {
+	Mat disp = Mat::zeros(RANGE_.size(), CV_8UC3);
 	int count = 0;
-	for (auto seg : segment) {
-		//imshow("disp", disp);
+	for (auto seg : mainSeg_) {
 		for (auto p : seg)
-			disp.at<Vec3b>(p) = colors[count];
+			disp.at<Vec3b>(p) = colors_[count];
 		if (++count >= topk_)
 			break;
-		//waitKey(-1);
 	}
-}
-
-void Segmentation::drawBlack(SegmentSet &blackRegions, Mat &disp, Vec3b &color)
-{
-	for (auto black : blackRegions)
-		for (auto p : black)
-			disp.at<Vec3b>(p) = color;
-}
-
-void Segmentation::drawConvexHull(Mat &src, PointSet &hull, Scalar color)
-{
-	std::vector<cv::Point>::const_iterator it;
-	for (it = hull.begin() + 1; it != hull.end(); it++)
-		line(src, *(it - 1), *it, color, 2);
-	line(src, hull[0], hull.back(), color, 2);
-}
-
-void Segmentation::drawRotateRect(Mat &src, RotatedRect &rr)
-{
-	Point2f vertices[4];
-	rr.points(vertices);
-	for (int i = 0; i < 4; i++)
-		line(src, vertices[i], vertices[(i + 1) % 4], Scalar(0, 0, 255), 3);
-}
-
-void Segmentation::drawSobel(Mat &depth)
-{
-	Mat sobelx, sobely, sobel, disp;
-	cv::Sobel(depth, sobelx, 2, 1, 0);
-	cv::Sobel(depth, sobely, 2, 0, 1);
-	sobel = abs(sobelx) + abs(sobely);
-	//cout << "asd" << endl;
-	double min, max;
-	cv::minMaxLoc(sobel, &min, &max);
-	sobel.convertTo(disp, CV_8U, 255. / max);
-	Canny(disp, disp, 0, 20);
-	cout << max << endl;
-	imshow("sobel", disp);
-}
-
-void Segmentation::drawRegions(SegmentSet &segment, Mat &color, Mat &depth, Mat &disp)
-{
-	//vector<Mat> rMat;//(segment.size(), Mat::zeros(color.size(), CV_8UC3));
-	//for (unsigned i = 0; i < segment.size(); i++) {
-	//	rMat.push_back(Mat::zeros(color.size(), CV_8UC3));
-	//	for (auto p : segment[i]) {
-	//		rMat.back().at<Vec3b>(p) = color.at<Vec3b>(p);
-	//	}
-	//	//draw pointset
-
-	//	//for (auto p: segment[i])
-	//	//    rMat.back().at<Vec3b>(p) = color.at<Vec3b>(p);
-
-	//	Mat canny, gray, dgray, poly;
-	//	cv::cvtColor(rMat[i], gray, cv::COLOR_RGB2GRAY);
-	//	cv::medianBlur(gray, gray, 5);
-	//	//imshow("wqewq", gray);
-	//	cv::Canny(gray, canny, 100, 300);
-	//	//cv::dilate(canny, canny, Mat());
-	//	//cv::erode(canny, canny, Mat());
-
-	//	//imwrite("canny.png", canny);
-	//	//waitKey( - 1);
-
-	//	vector<Point> vex;
-	//	vector<Point> whitePoint;
-	//	for (int i = 0; i < RANGE_.width; i++) {
-	//		for (int j = 0; j < RANGE_.height; j++) {
-	//			if (canny.at<char>(Point(i, j)))
-	//				whitePoint.push_back(Point(i, j));
-	//		}
-	//	}
-	//	cv::approxPolyDP(whitePoint, vex, 50, true);
-	//	for (auto p : vex) {
-	//		cv::circle(color, p, 3, Scalar(255, 0, 0), 3);
-	//	}
-
-	//	imshow("xxx", color);
-	//	//waitKey( - 1);
-
-
-	//	//if (i)  continue;
-
-
-	//	/*
-	//	vector<Point> corners;
-	//	cv::goodFeaturesToTrack(canny, corners, 10, 0.01, 60, Mat(), 3, false, 4);
-	//	for (auto p: corners)
-	//	cv::circle(color, p, 2, Scalar(255, 0, 0), 2);
-	//	*/
-
-
-
-
-	//	//vector<vector<Point>> contours;
-	//	//cv::findContours(canny, contours, RETR_EXTERNAL, 1);
-	//	//cv::drawContours(color, contours,  -1, Scalar(0, 0, 0), 2);
-
-
-	//	//lineDection(canny, i);
-
-	//	imshow(to_string(i), canny);
-	//	//imshow(to_string(i), rMat.back());
-	//}
-
-}
-
-void Segmentation::drawBoundBox(SegmentSet &segment, vector<double> &distance, Mat &color, Mat &depth, string categoryName)
-{
-	int count = 0;
-	Mat classification = color.clone();
-
-	for (auto seg : segment) {
-		vector<Point> hull;
-		convexHull(seg, hull, false);
-		//RotatedRect rr = cv::minAreaRect(hull);
-		Rect boundbox = Segmentation::hullBoundBox(hull);
-		rectangle(color, boundbox, Scalar(255, 255, 255), 2);
-		count++;
-	}
-	imshow("regions", color);
-	imshow("classification", classification);
-	imshow("depth", 65535 / 1200 * depth);
+	return disp;
 }

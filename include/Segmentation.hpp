@@ -1,10 +1,9 @@
 #include "Opencv.hpp"
-#include "MyDraw.hpp"
 
 //#define imshow(_W_, _M_) imwrite(_W_+std::string(".png"), _M_)
 
 namespace _IDLER_{
-	class Segmentation : public Draw
+	class Segmentation
 	{
 	public:
 		Segmentation(int width, int height, unsigned topk, short t);
@@ -26,18 +25,7 @@ namespace _IDLER_{
 
 		void randColor();
 
-		//Extend Draw
-		virtual void drawRotateRect(Mat& src, RotatedRect& rr);
-		virtual void drawConvexHull(Mat& src, PointSet& hull, Scalar color);
-
-		virtual void drawBlack(SegmentSet& blackRegions, Mat& disp, Vec3b& color);
-		virtual void draw(SegmentSet& segment, Mat& disp, vector<Vec3b>& colors);
-		virtual void drawBoundBox(SegmentSet& segment, vector<double>& distance, Mat& color, Mat& depth, string categoryName = "bottle");
-		virtual void drawRegions(SegmentSet& segment, Mat& color, Mat& depth, Mat& disp);
-
-		virtual void drawSobel(Mat& depth);
-
-
+		Mat Segmentation::draw();
 
 	public:
 		//

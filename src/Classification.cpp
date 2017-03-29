@@ -136,7 +136,7 @@ Mat Classification::getDataSet(std::vector<std::string> &data_path, std::vector<
     for (int i = 0; i < nImgNum; i++){
         src = imread(data_path[i]);
         if (src.cols && src.rows){
-            imgname = FileOperation::findFileName(data_path[i]);
+            imgname = Directory::findFileName(data_path[i]);
 			MESSAGE_COUT("PROCESS", imgname << "\t" << success++);
 			Mat post = extractFeature(src, hog_);
             data_mat.push_back(post);

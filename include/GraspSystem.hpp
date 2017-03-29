@@ -1,6 +1,6 @@
 #include "RealsensePointsCloud.hpp"
 #include "Realsense.hpp"
-#include "FileOperation.hpp"
+#include "Directory.hpp"
 #include "Segmentation.hpp"
 //#include "Classification.hpp"
 #include <thread>
@@ -15,7 +15,7 @@ using _IDLER_::Segmentation;
 //using _IDLER_::Classification;
 
 
-class GraspSystem: public FileOperation
+class GraspSystem: public Directory
 {
 public:
 	GraspSystem(int width, int height, float fps = 30);

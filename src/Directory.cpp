@@ -1,9 +1,9 @@
-#include "FileOperation.hpp"
+#include "Directory.hpp"
 #include "Common.hpp"
 #include <windows.h>
 
 //Get current dir filepath
-std::vector<std::string> FileOperation::getCurdirFilePath(std::string dirPath)
+std::vector<std::string> Directory::getCurdirFilePath(std::string dirPath)
 {
 	WIN32_FIND_DATA ffd;
 	HANDLE hFind = INVALID_HANDLE_VALUE;
@@ -19,7 +19,7 @@ std::vector<std::string> FileOperation::getCurdirFilePath(std::string dirPath)
 }
 
 //Get current dir filename
-std::vector<std::string> FileOperation::getCurdirFileName(std::string dirPath)
+std::vector<std::string> Directory::getCurdirFileName(std::string dirPath)
 {
 	WIN32_FIND_DATA ffd;
 	HANDLE hFind = INVALID_HANDLE_VALUE;
@@ -35,7 +35,7 @@ std::vector<std::string> FileOperation::getCurdirFileName(std::string dirPath)
 }
 
 //Get subdir 
-std::vector<std::string> FileOperation::getSubdirName(std::string dirPath)
+std::vector<std::string> Directory::getSubdirName(std::string dirPath)
 {
 	WIN32_FIND_DATA ffd;
 	HANDLE hFind = INVALID_HANDLE_VALUE;
@@ -54,7 +54,7 @@ std::vector<std::string> FileOperation::getSubdirName(std::string dirPath)
 }
 
 //Get file name from file path;
-std::string FileOperation::findFileName(std::string path)
+std::string Directory::findFileName(std::string path)
 {
 	int pos = path.find_last_of('\\');
 	return path.substr(pos + 1);
