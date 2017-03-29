@@ -27,8 +27,6 @@ public:
 
 
 	vector<Rect> classification(vector<Rect> &regions);
-	int registration();
-	int localization();
 	int Grasp();
 	
 private:

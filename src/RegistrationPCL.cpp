@@ -32,7 +32,8 @@ int Objects::load_(Object &mobj)
 		MESSAGE_COUT("ERROR", "Failed to load model from [" << mobj.model_path << "]");
 		return -1;
 	}
-	Downsample(mobj.model, mobj.leaf);
+	//Downsample(mobj.model, mobj.leaf);
+	
 	//Load grasping point region
 	if (!LoadGraspPcd(mobj.grasp_path, mobj.grasp)){
 		MESSAGE_COUT("ERROR", "Failed to load model from [" << mobj.model_path << "]");
@@ -56,6 +57,11 @@ Matrix4f _IDLER_::RegistrationPCL::Apply(PointCloudNT::Ptr &seg, int index)
 	//Matrix4f transformation = RegistrationNoShow_ICP(objects_[index].model, seg, model_align, para_);
 	Matrix4f transformation = Registration(objects_[index].model, seg, model_align, para_);
 	return transformation;
+}
+
+void _IDLER_::RegistrationPCL::Transform(const Matrix4f& mat, PointCloudNT::Ptr &align, int index)
+{
+	pcl::transformPointCloud(*objects_[index].model, *align, mat);
 }
 
 

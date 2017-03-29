@@ -31,7 +31,8 @@ int savePCD(const string& outfilename, PointCloudNT::Ptr &myseg, double scale = 
 	return 0;
 }
 
-//typedef vector<PXCPointF32> PXC2DPointSet;
+typedef vector<PXCPointF32> PXC2DPointSet;
+typedef vector<PXCPoint3DF32> PXC3DPointSet;
 //class Reflect_Result {
 //public:
 //	bool isEmpty(){
@@ -365,29 +366,9 @@ string cvtCoordinate(PXCPoint3DF32 v, Mat &trans)
 	return buf;
 }
 
-
-// Classification
-vector<Rect> GraspSystem::classification(vector<Rect> &regions)
-{
-	// Load Classification model
-	vector<Rect> filter;
-	Classification classifier(""); // Load some path
-	for (auto r : regions){
-		Mat roi = color_(r);
-		int p = static_cast<int>(classifier.predict(roi));
-		if (p == 1)
-			filter.push_back(r);
-	}
-	return filter;
-}
-
 /**
  * @brief TODOLIST
  */
-int GraspSystem::registration()
-{
-	return 0;
-}
 
 int GraspSystem::Grasp()
 {
@@ -445,12 +426,39 @@ int GraspSystem::Grasp()
 				mask(r).setTo(255);
 				display2.copyTo(ROI, mask);
 				imshow("pointscloud", ROI);
+				// registration
 				PointCloudNT::Ptr seg(new PointCloudNT);
 				size_t sz = PXC2PCL(ms, pointscloud, seg, scale);
-				savePCD(to_string(framecnt) + ".pcd", seg, scale);
-				//MESSAGE_COUT("INFO", "Generate Point Cloud: " << sz);
-				//Matrix4f transformation = ransac.Apply(seg, p);
-				//MESSAGE_COUT("Transformation Matrix", transformation);
+				MESSAGE_COUT("INFO", "Generate Point Cloud: " << sz);
+				Matrix4f transformation = ransac.Apply(seg, p);
+				// reflect
+				PointCloudNT::Ptr model_algin(new PointCloudNT);
+				ransac.Transform(transformation, model_algin, p);
+				//
+				PXC2DPointSet show2d(model_algin->size());
+				PXC3DPointSet show3d;
+				for (auto &pc : *model_algin)
+					show3d.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
+				projection_->ProjectCameraToDepth(show3d.size(), &show3d[0], &show2d[0]);
+				for (auto p : show2d){
+					
+				}
+
+				////Reflect
+				//Reflect_Result show2d;
+				//show2d.model.resize(model_align->size());
+				//show2d.grasp.resize(grasp_align->size());
+				//vector<PXCPoint3DF32> result;
+				//for (auto &pc : *model_align) {
+				//	result.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
+				//}
+				//projection->ProjectCameraToDepth(result.size(), &result[0], &show2d.model[0]);
+				//result.clear();
+				//for (auto &pc : *grasp_align) {
+				//	result.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
+				//}
+				//projection->ProjectCameraToDepth(result.size(), &result[0], &show2d.grasp[0]);
+
 			}
 			rectangle(color2, r, drawColor[p], 2);
 				//putText(color2, categories[p], r.tl(), 1, 1, Scalar(255, 0, 0));
