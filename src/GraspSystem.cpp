@@ -374,7 +374,7 @@ int GraspSystem::Grasp()
 {
 	long framecnt;
 	clock_t start, end, sum;
-	Mat depth2, color2, display2;
+	Mat depth2, color2, display2, color;
 	vector<PXCPoint3DF32> pointscloud;
 	// configure segmentation
 	Size segSize(320, 240);
@@ -395,6 +395,7 @@ int GraspSystem::Grasp()
 		//////////////////////////////////////////////
 		std::unique_lock<mutex> lk(myLock_);
 		myWait_.wait(lk);
+		color = color_.clone();
 		resize(color_, color2, segSize);
 		resize(depth_, depth2, segSize);
 		resize(pcdisp_, display2, segSize);
@@ -441,24 +442,10 @@ int GraspSystem::Grasp()
 					show3d.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
 				projection_->ProjectCameraToDepth(show3d.size(), &show3d[0], &show2d[0]);
 				for (auto p : show2d){
-					
+					Point2f tmp(p.x, p.y);
+					color.at<Vec3b>(Point2f(p.x, p.y)) = Vec3b(255, 255, 0);
 				}
-
-				////Reflect
-				//Reflect_Result show2d;
-				//show2d.model.resize(model_align->size());
-				//show2d.grasp.resize(grasp_align->size());
-				//vector<PXCPoint3DF32> result;
-				//for (auto &pc : *model_align) {
-				//	result.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
-				//}
-				//projection->ProjectCameraToDepth(result.size(), &result[0], &show2d.model[0]);
-				//result.clear();
-				//for (auto &pc : *grasp_align) {
-				//	result.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
-				//}
-				//projection->ProjectCameraToDepth(result.size(), &result[0], &show2d.grasp[0]);
-
+				imshow("reflect", color);
 			}
 			rectangle(color2, r, drawColor[p], 2);
 				//putText(color2, categories[p], r.tl(), 1, 1, Scalar(255, 0, 0));
