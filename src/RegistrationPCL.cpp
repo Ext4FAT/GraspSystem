@@ -54,8 +54,8 @@ Matrix4f _IDLER_::RegistrationPCL::Apply(PointCloudNT::Ptr &seg, int index)
 	PointCloudNT::Ptr model_align(new PointCloudNT);
 	PointCloudT::Ptr grasp_align(new PointCloudT);
 	//Alignment
-	//Matrix4f transformation = RegistrationNoShow_ICP(objects_[index].model, seg, model_align, para_);
-	Matrix4f transformation = Registration(objects_[index].model, seg, model_align, para_);
+	Matrix4f transformation = RegistrationNoShow(objects_[index].model, seg, model_align, para_);
+	//Matrix4f transformation = Registration(objects_[index].model, seg, model_align, para_);
 	return transformation;
 }
 

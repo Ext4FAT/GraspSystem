@@ -19,25 +19,24 @@ class GraspSystem: public Directory
 {
 public:
 	GraspSystem(int width, int height, float fps = 30);
+	// realsense driver
 	int configureRealsense();
 	int releaseRealsense();
 	int acquireRealsenseData(Mat &color, Mat &depth, Mat &display, vector<PXCPoint3DF32> &pointscloud);
 	int captureFrame();
+	// drive dobot 
 	int dobotCTRL();
-
-
-	vector<Rect> classification(vector<Rect> &regions);
-	int Grasp();
-	
+	// localize point 
+	int graspLocalization();
 private:
 	// Callback
 	static void selectPoint(int event, int x, int y, int flags, void* paras);
+	// Opencv related
 	void drawCornerText(const Mat &color, const Mat &depth, const vector<Point2f> &corners);
-	// 
-	int commandParse(int key);
 	void placeWindows(int topk);
 	Mat PXCImage2Mat(PXCImage* pxc);
 	// Dobot related 
+	int commandParse(int key);
 	Mat calibrationR2D(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud);
 	vector<Point2f> findChessBoardCorners(Mat &color, Mat &depth, Size pattern = { 3, 3 });
 	void calArmCoordinate(PXCPoint3DF32 origin, float side);
@@ -54,11 +53,13 @@ private:
 	PXCSizeI32 camera_;
 	pxcF32 fps_;
 	RealsensePointsCloud dw_;
-	//OpenCV
+	//Thread synchronize
 	Mat color_;
 	Mat depth_;
 	Mat pcdisp_;
 	vector<PXCPoint3DF32> pointscloud_;
+	mutex myLock_;
+	condition_variable myWait_;
 	// ChessBoard
 	bool calibrated_ = false;
 	Size pattern_ = { 3, 3 };
@@ -66,17 +67,10 @@ private:
 	vector<PXCPoint3DF32> corresponding_;
 	PXCPoint3DF32 origin_;
 	float side_;
-	// Grasp
+	// Grasp flag
 	bool autoLocalization_ = false;
 	// Mouse Click to select point
 	Point grasppoint_;
 	Point preClick_ = { -1, -1 };
 	Point click_ = { 0, 0 };
-	//thread
-	mutex myLock_;
-	condition_variable myWait_;
-
-
-	// Classifier
-	//Classification classifier_;
 };

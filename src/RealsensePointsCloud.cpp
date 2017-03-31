@@ -1,9 +1,6 @@
 #include "RealsensePointsCloud.hpp"
 using namespace _IDLER_;
 
-// Extremely Potential Danger !!!!!!
-RealsensePointsCloud::RealsensePointsCloud()
-{}
 //
 RealsensePointsCloud::RealsensePointsCloud(	PXCSession* s, 
 							PXCSizeI32 user_size, 

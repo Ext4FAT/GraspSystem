@@ -12,7 +12,7 @@ using std::vector;
 namespace _IDLER_{
 	class RealsensePointsCloud{
 	public:
-		RealsensePointsCloud();//Potential Danger !!!!!!
+		RealsensePointsCloud() :session(0), drawVertices(0){};//Potential Danger !!!!!!
 		RealsensePointsCloud(PXCSession* s, PXCSizeI32 user_size, PXCPoint3DF32 l = { .5, .5, 1.0 });
 		~RealsensePointsCloud();
 	public:

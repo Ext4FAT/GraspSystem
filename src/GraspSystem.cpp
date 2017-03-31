@@ -370,11 +370,13 @@ string cvtCoordinate(PXCPoint3DF32 v, Mat &trans)
  * @brief TODOLIST
  */
 
-int GraspSystem::Grasp()
+int GraspSystem::graspLocalization()
 {
+	// decline 
 	long framecnt;
 	clock_t start, end, sum;
-	Mat depth2, color2, display2, color;
+	Mat color, depth, display;
+	Mat  color2, depth2, display2;
 	vector<PXCPoint3DF32> pointscloud;
 	// configure segmentation
 	Size segSize(320, 240);
@@ -391,26 +393,19 @@ int GraspSystem::Grasp()
 	ransac.Preparation({"papercup"});
 	// loop
 	for (framecnt = 0; 1; framecnt++) {
-		start = clock();
-		//////////////////////////////////////////////
+		// critical area
 		std::unique_lock<mutex> lk(myLock_);
 		myWait_.wait(lk);
 		color = color_.clone();
-		resize(color_, color2, segSize);
-		resize(depth_, depth2, segSize);
-		resize(pcdisp_, display2, segSize);
+		depth = depth_.clone();
+		display = pcdisp_.clone();
 		pointscloud = pointscloud_;
-		//color_ = depth_ = 0;
 		lk.unlock();
-		/////////////////////////////////////////////
-		end = clock();
-		//cout << 1.0*(end - start) / CLOCKS_PER_SEC << endl;
-		sum += end - start;
-		if (sum % 10 == 0) {
-			cout << sum / (10.0*CLOCKS_PER_SEC) << endl;
-			sum = 0;
-		}
-		
+		// resize
+		resize(color, color2, segSize);
+		resize(depth, depth2, segSize);
+		resize(display, display2, segSize);
+
 		// segmentation
 		myseg.Segment(depth2, color2);
 		const SegmentSet& mainSeg = myseg.mainSegmentation();
@@ -421,7 +416,7 @@ int GraspSystem::Grasp()
 			Mat roi = color2(r);
 			int p = classifier.predict(roi);
 			if (p){
-				double scale = 1.0 / 330;
+				double scale = 1.0 / 350;
 				Mat ROI;
 				Mat mask = Mat::zeros(segSize, CV_8UC1);
 				mask(r).setTo(255);
@@ -442,20 +437,19 @@ int GraspSystem::Grasp()
 					show3d.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
 				projection_->ProjectCameraToDepth(show3d.size(), &show3d[0], &show2d[0]);
 				for (auto p : show2d){
+					static Rect range = Rect(0, 0, camera_.width, camera_.height);
 					Point2f tmp(p.x, p.y);
-					color.at<Vec3b>(Point2f(p.x, p.y)) = Vec3b(255, 255, 0);
+					if (tmp.inside(range))
+						color.at<Vec3b>(Point2f(p.x, p.y)) = Vec3b(255, 255, 0);
 				}
 				imshow("reflect", color);
 			}
 			rectangle(color2, r, drawColor[p], 2);
-				//putText(color2, categories[p], r.tl(), 1, 1, Scalar(255, 0, 0));
-			//}
 		}
 		imshow("regions", color2);
 		myseg.clear();
 		waitKey(1);
 	}
-	//imshow("regions", color2);
 	return 1;
 }
 
@@ -549,7 +543,7 @@ int GraspSystem::dobotCTRL()
 	cv::setMouseCallback("color", selectPoint, (void*)(&click_));
 	cv::setMouseCallback("depth", selectPoint, (void*)(&click_));
 	//Thread
-	thread task(&GraspSystem::Grasp, this);
+	thread task(&GraspSystem::graspLocalization, this);
 	//thread master(&VideoDriver::captureFrame, this);
 	captureFrame();
 	return 1;
