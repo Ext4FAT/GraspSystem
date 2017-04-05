@@ -5,4 +5,6 @@
 #include <pxcsession.h>
 #include <pxcsensemanager.h>
 #include <pxcprojection.h>
+#include <pxcspeechsynthesis.h>
+#include <pxcspeechrecognition.h>
 

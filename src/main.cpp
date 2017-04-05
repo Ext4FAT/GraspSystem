@@ -7,8 +7,14 @@
 
 int main(int argc, char** argv)
 {
+	// Grasping demo
 	GraspSystem data(640, 480, 30);
 	data.dobotCTRL();
+	///////////////////////////////////////////////////////////////////////////
+
+
+
+	/////////////////////////////////////////////////////////////////////////////
 
 	//Mat color =  imread("C:\\Users\\IDLER\\Desktop\\modelSet\\chessboard.jpg");
 	//cv::imshow("xxx", color);

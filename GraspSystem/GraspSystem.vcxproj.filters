@@ -60,6 +60,12 @@
     <ClInclude Include="..\include\Directory.hpp">
       <Filter>Header\Class\Virtual</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Speech.hpp">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Voice.h">
+      <Filter>Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">

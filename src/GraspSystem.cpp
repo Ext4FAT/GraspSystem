@@ -10,6 +10,8 @@
 
 using namespace _IDLER_;
 
+#include "Speech.hpp"
+
 
 int savePCD(const string& outfilename, PointCloudNT::Ptr &myseg, double scale = 1. / 330)
 {
@@ -372,6 +374,8 @@ string cvtCoordinate(PXCPoint3DF32 v, Mat &trans)
 
 int GraspSystem::graspLocalization()
 {
+	// speech
+	Speech speech;
 	// decline 
 	long framecnt;
 	clock_t start, end, sum;
@@ -436,13 +440,22 @@ int GraspSystem::graspLocalization()
 				for (auto &pc : *model_algin)
 					show3d.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
 				projection_->ProjectCameraToDepth(show3d.size(), &show3d[0], &show2d[0]);
+				PointSet ps;
 				for (auto p : show2d){
 					static Rect range = Rect(0, 0, camera_.width, camera_.height);
 					Point2f tmp(p.x, p.y);
-					if (tmp.inside(range))
+					if (tmp.inside(range)){
 						color.at<Vec3b>(Point2f(p.x, p.y)) = Vec3b(255, 255, 0);
+						tmp *= 0.5;
+						ps.push_back(tmp);
+					}
 				}
-				imshow("reflect", color);
+				Rect ref = cv::boundingRect(ps);
+				double sim = 1.0 * (ref&r).area() / (ref | r).area();
+				if (sim > 0.85){
+					speech.speak("配准成功");
+					imshow("reflect", color);
+				}
 			}
 			rectangle(color2, r, drawColor[p], 2);
 		}
@@ -542,6 +555,9 @@ int GraspSystem::dobotCTRL()
 	placeWindows(0);
 	cv::setMouseCallback("color", selectPoint, (void*)(&click_));
 	cv::setMouseCallback("depth", selectPoint, (void*)(&click_));
+	//
+	Speech speech;
+	speech.speak("启动程序");
 	//Thread
 	thread task(&GraspSystem::graspLocalization, this);
 	//thread master(&VideoDriver::captureFrame, this);
