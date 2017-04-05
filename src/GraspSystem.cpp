@@ -48,6 +48,29 @@ size_t PXC2PCL(PointSet &pSet, vector<PXCPoint3DF32> &vertices, PointCloudNT::Pt
 	return scene->size();
 }
 
+PXC3DPointSet PCL2PXC(PointCloudNT::Ptr &pointscloud, double scale)
+{
+	PXC3DPointSet result;
+	for (auto &pc : *pointscloud)
+		result.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
+	return result;
+}
+
+PXC3DPointSet PCL2PXC(PointCloudT::Ptr &pointscloud, double scale)
+{
+	PXC3DPointSet result;
+	for (auto &pc : *pointscloud)
+		result.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
+	return result;
+}
+
+Rect operator/(const Rect &r, int scale)
+{
+	return Rect(r.x / 2, r.y / 2, r.width / 2, r.height / 2);
+}
+
+
+
 //
 //// genRegistration
 //Reflect_Result genRegistrationResult(	PXCProjection *projection,
@@ -425,23 +448,15 @@ int GraspSystem::graspLocalization()
 				PointCloudT::Ptr grasp_align(new PointCloudT);
 				ransac.Transform(transformation, model_align, grasp_align, p);
 				// convert Points cloud to PXC3DPoint set
-				PXC3DPointSet model3d, grasp3d;
-				for (auto &pc : *model_align)
-					model3d.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
-				for (auto &pc : *grasp_align)
-					grasp3d.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
+				PXC3DPointSet model3d = PCL2PXC(model_align, scale);
+				PXC3DPointSet grasp3d = PCL2PXC(grasp_align, scale);
 				// query 2D points
 				PointSet model2d = cvt3Dto2D(model3d);
 				PointSet grasp2d = cvt3Dto2D(grasp3d);
 				Rect mRect = boundingRect(model2d);
 				Rect gRect = boundingRect(grasp2d);
-				{
-					mRect.x /= 2;
-					mRect.y /= 2;
-					mRect.width /= 2;
-					mRect.height /= 2;
-				}
-				double sim = 1.0 * (mRect&r).area() / (mRect | r).area();
+				//
+				double sim = 1.0 * ((mRect / 2)&r).area() / ((mRect / 2) | r).area();
 				if (sim > 0.85){
 					for (auto m : model2d)
 						color.at<Vec3b>(m) = COLOR_MODEL;
@@ -492,6 +507,7 @@ int GraspSystem::captureFrame()
 		pointscloud_ = pointscloud;
 		myWait_.notify_all();
 		///////////////////////////////////////////
+
 		// Keyboard commands parse
 		int key = waitKey(1);
 		if (key == ' '){ // calibrate the arm ordinary

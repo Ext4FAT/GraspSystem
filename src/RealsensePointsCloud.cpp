@@ -63,14 +63,11 @@ PXCImage* RealsensePointsCloud::DepthToWorldByQueryVertices(std::vector<PXCPoint
 	PXCImage::ImageData drawVerticesData;
 	if (PXC_STATUS_NO_ERROR > drawVertices->AcquireAccess(PXCImage::ACCESS_WRITE, drawVerticesInfo.format, &drawVerticesData))
 		return 0;
-
 	/* Retrieve vertices */
 	float brightness = 200.f;
 
 	PXCImage::ImageInfo dinfo = depth->QueryInfo();
 	pxcBYTE* pdrawVerticesDat = drawVerticesData.planes[0];
-
-
 
 	for (pxcI32 y = 1; y < dinfo.height - 1; y++) {
 		for (pxcI32 x = 1; x < dinfo.width - 1; x++) {
@@ -121,7 +118,6 @@ PXCImage* RealsensePointsCloud::SegmentationWorld(std::vector<PXCPoint3DF32>& ve
 	if (PXC_STATUS_NO_ERROR > drawVertices->AcquireAccess(PXCImage::ACCESS_WRITE, drawVerticesInfo.format, &drawVerticesData))
 		return 0;
 	/* Retrieve vertices */
-	float brightness = 200.f;
 	PXCImage::ImageInfo dinfo = depth->QueryInfo();
 	pxcBYTE* pdrawVerticesDat = drawVerticesData.planes[0];
 	memset(pdrawVerticesDat, -1, 4 * dinfo.width*dinfo.height);
