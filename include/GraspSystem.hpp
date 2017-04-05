@@ -15,6 +15,10 @@ using _IDLER_::Segmentation;
 //using _IDLER_::Classification;
 
 
+typedef vector<PXCPointF32> PXC2DPointSet;
+typedef vector<PXCPoint3DF32> PXC3DPointSet;
+
+
 class GraspSystem: public Directory
 {
 public:
@@ -35,6 +39,7 @@ private:
 	void drawCornerText(const Mat &color, const Mat &depth, const vector<Point2f> &corners);
 	void placeWindows(int topk);
 	Mat PXCImage2Mat(PXCImage* pxc);
+	PointSet cvt3Dto2D(PXC3DPointSet &ps3d);
 	// Dobot related 
 	int commandParse(int key);
 	Mat calibrationR2D(Mat &color, Mat &depth, vector<PXCPoint3DF32> &pointscloud);

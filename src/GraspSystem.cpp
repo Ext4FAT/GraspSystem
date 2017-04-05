@@ -10,7 +10,7 @@
 
 using namespace _IDLER_;
 
-#include "Speech.hpp"
+#include "Speaker.hpp"
 
 
 int savePCD(const string& outfilename, PointCloudNT::Ptr &myseg, double scale = 1. / 330)
@@ -32,32 +32,6 @@ int savePCD(const string& outfilename, PointCloudNT::Ptr &myseg, double scale = 
 	ofs.close();
 	return 0;
 }
-
-typedef vector<PXCPointF32> PXC2DPointSet;
-typedef vector<PXCPoint3DF32> PXC3DPointSet;
-//class Reflect_Result {
-//public:
-//	bool isEmpty(){
-//		return model.size() == 0 && grasp.size() == 0;
-//	}
-//public:
-//	PXC2DPointSet model;
-//	PXC2DPointSet grasp;
-//};
-//
-//Rect myBoundBox(const vector<PXCPointF32> &pointset)
-//{
-//	//static Point extend(5, 5);
-//	Point pmax(0, 0), pmin(0x7fffffff, 0x7fffffff);
-//	for (auto p : pointset) {
-//		if (p.x > pmax.x) pmax.x = p.x;
-//		if (p.x < pmin.x) pmin.x = p.x;
-//		if (p.y > pmax.y) pmax.y = p.y;
-//		if (p.y < pmin.y) pmin.y = p.y;
-//	}
-//	return Rect(pmin, pmax);
-//}
-
 
 // Convert Realsense's PXC to PCL's PointCloud
 size_t PXC2PCL(PointSet &pSet, vector<PXCPoint3DF32> &vertices, PointCloudNT::Ptr &scene, double scale = 1.f / 300.f)
@@ -372,10 +346,25 @@ string cvtCoordinate(PXCPoint3DF32 v, Mat &trans)
  * @brief TODOLIST
  */
 
+PointSet GraspSystem::cvt3Dto2D(PXC3DPointSet &ps3d)
+{
+	static Rect range = Rect(0, 0, camera_.width, camera_.height);
+	PXC2DPointSet ps2d(ps3d.size());
+	projection_->ProjectCameraToDepth(ps3d.size(), &ps3d[0], &ps2d[0]);
+	PointSet ps;
+	for (auto p : ps2d){
+		Point2f pt(p.x, p.y);
+		if (Point2f(p.x, p.y).inside(range))
+			ps.push_back(pt);
+	}
+	return ps;
+}
+
+
 int GraspSystem::graspLocalization()
 {
 	// speech
-	Speech speech;
+	Speaker speech;
 	// decline 
 	long framecnt;
 	clock_t start, end, sum;
@@ -432,29 +421,35 @@ int GraspSystem::graspLocalization()
 				MESSAGE_COUT("INFO", "Generate Point Cloud: " << sz);
 				Matrix4f transformation = ransac.Apply(seg, p);
 				// reflect
-				PointCloudNT::Ptr model_algin(new PointCloudNT);
-				ransac.Transform(transformation, model_algin, p);
-				//
-				PXC2DPointSet show2d(model_algin->size());
-				PXC3DPointSet show3d;
-				for (auto &pc : *model_algin)
-					show3d.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
-				projection_->ProjectCameraToDepth(show3d.size(), &show3d[0], &show2d[0]);
-				PointSet ps;
-				for (auto p : show2d){
-					static Rect range = Rect(0, 0, camera_.width, camera_.height);
-					Point2f tmp(p.x, p.y);
-					if (tmp.inside(range)){
-						color.at<Vec3b>(Point2f(p.x, p.y)) = Vec3b(255, 255, 0);
-						tmp *= 0.5;
-						ps.push_back(tmp);
-					}
+				PointCloudNT::Ptr model_align(new PointCloudNT);
+				PointCloudT::Ptr grasp_align(new PointCloudT);
+				ransac.Transform(transformation, model_align, grasp_align, p);
+				// convert Points cloud to PXC3DPoint set
+				PXC3DPointSet model3d, grasp3d;
+				for (auto &pc : *model_align)
+					model3d.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
+				for (auto &pc : *grasp_align)
+					grasp3d.push_back({ scale * pc.x, scale * pc.y, scale * pc.z });
+				// query 2D points
+				PointSet model2d = cvt3Dto2D(model3d);
+				PointSet grasp2d = cvt3Dto2D(grasp3d);
+				Rect mRect = boundingRect(model2d);
+				Rect gRect = boundingRect(grasp2d);
+				{
+					mRect.x /= 2;
+					mRect.y /= 2;
+					mRect.width /= 2;
+					mRect.height /= 2;
 				}
-				Rect ref = cv::boundingRect(ps);
-				double sim = 1.0 * (ref&r).area() / (ref | r).area();
+				double sim = 1.0 * (mRect&r).area() / (mRect | r).area();
 				if (sim > 0.85){
-					speech.speak("配准成功");
+					for (auto m : model2d)
+						color.at<Vec3b>(m) = COLOR_MODEL;
+					for (auto g : grasp2d)
+						color.at<Vec3b>(g) = COLOR_GRASP;
+					speech.speak(GRASP_REG_SUCCESS);
 					imshow("reflect", color);
+					speech.speak(GRASP_ACTION);
 				}
 			}
 			rectangle(color2, r, drawColor[p], 2);
@@ -556,8 +551,8 @@ int GraspSystem::dobotCTRL()
 	cv::setMouseCallback("color", selectPoint, (void*)(&click_));
 	cv::setMouseCallback("depth", selectPoint, (void*)(&click_));
 	//
-	Speech speech;
-	speech.speak("启动程序");
+	Speaker speech;
+	speech.speak(GRASP_START);
 	//Thread
 	thread task(&GraspSystem::graspLocalization, this);
 	//thread master(&VideoDriver::captureFrame, this);

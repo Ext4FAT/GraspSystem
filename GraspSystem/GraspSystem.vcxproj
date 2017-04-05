@@ -166,7 +166,7 @@
     <ClInclude Include="..\include\Opencv.hpp" />
     <ClInclude Include="..\include\Realsense.hpp" />
     <ClInclude Include="..\include\Segmentation.hpp" />
-    <ClInclude Include="..\include\Speech.hpp" />
+    <ClInclude Include="..\include\Speaker.hpp" />
     <ClInclude Include="..\include\Voice.h" />
     <ClInclude Include="..\src\Socket.hpp" />
   </ItemGroup>

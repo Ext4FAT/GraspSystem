@@ -59,9 +59,10 @@ Matrix4f _IDLER_::RegistrationPCL::Apply(PointCloudNT::Ptr &seg, int index)
 	return transformation;
 }
 
-void _IDLER_::RegistrationPCL::Transform(const Matrix4f& mat, PointCloudNT::Ptr &align, int index)
+void _IDLER_::RegistrationPCL::Transform(const Matrix4f& mat, PointCloudNT::Ptr &model_align, PointCloudT::Ptr &grap_align, int index)
 {
-	pcl::transformPointCloud(*objects_[index].model, *align, mat);
+	pcl::transformPointCloud(*objects_[index].model, *model_align, mat);
+	pcl::transformPointCloud(*objects_[index].grasp, *grap_align, mat);
 }
 
 

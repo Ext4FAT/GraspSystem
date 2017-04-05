@@ -67,7 +67,7 @@ namespace _IDLER_{
 		int Preparation(vector<string> objs);
 		// Apply
 		Matrix4f Apply(PointCloudNT::Ptr &seg, int index);
-		void Transform(const Matrix4f& mat, PointCloudNT::Ptr &algin, int index);
+		void Transform(const Matrix4f& mat, PointCloudNT::Ptr &model_align, PointCloudT::Ptr &grap_align, int index);
 
 		// Get parameters
 		inline const RegisterParameter& getParameters(){

@@ -1,7 +1,6 @@
 /*******************************************************************************
 	Some efficient macros
 *******************************************************************************/
-
 #define SUM(_V_) std::accumulate(_V_.begin(), _V_.end(), 0);
 //#define SUM(_V_, _F_) std::accumulate(_V_.begin(), _V_.end(), 0, _F_);
 
@@ -48,4 +47,12 @@
 #define MiddlePoint(RECT)	\
 	Point(RECT.x + (RECT.width >> 1), RECT.y + (RECT.height >> 1))
 
+/*******************************************************************************
+Some configuration
+*******************************************************************************/
+#define GRASP_START "启动程序！"
+#define GRASP_REG_SUCCESS "配准成功！"
+#define GRASP_ACTION "实施抓取！"
 
+#define COLOR_MODEL Vec3b(255, 255, 0)
+#define COLOR_GRASP Vec3b(0, 0, 255);

@@ -11,17 +11,17 @@ namespace _IDLER_{
 	typedef std::shared_ptr<pxcCHAR> pxcString;
 	typedef PXCSpeechSynthesis::LanguageType LANGUAGE;
 
-	class Speech{
+	class Speaker{
 	public:
-		Speech() :session_(PXCSession::CreateInstance()), tts_(createSpeechSynthesis_(session_)), v_(genVoice_(tts_, PXCSpeechSynthesis::LANGUAGE_CN_CHINESE))
+		Speaker() :session_(PXCSession::CreateInstance()), tts_(createSpeechSynthesis_(session_)), v_(genVoice_(tts_, PXCSpeechSynthesis::LANGUAGE_CN_CHINESE))
 		{
 		}
-		~Speech(){
+		~Speaker(){
 			session_->Release();
 			tts_->Release();
 		}
 		int speak(string say){
-			return speech_(tts_, v_, say);
+			return speak_(tts_, v_, say);
 		}
 	private:
 		pxcString string2PXCString_(string const& source)
@@ -47,7 +47,7 @@ namespace _IDLER_{
 			tts->SetProfile(&pinfo);
 			return Voice(&pinfo);
 		}
-		int speech_(PXCSpeechSynthesis* tts, Voice &v, string say = "Hello£¬Word! ÄãºÃ£¬ÊÀ½ç£¡")
+		int speak_(PXCSpeechSynthesis* tts, Voice &v, string say)
 		{
 			tts->BuildSentence(1, string2PXCString_(say).get());
 			int nbuffers = tts->QueryBufferNum(1);
