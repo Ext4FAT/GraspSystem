@@ -15,7 +15,7 @@ namespace _IDLER_{
 		void completeDepth(Mat& depth);
 		void clear();
 	private:
-		void regionMerge(Mat& depth, SegmentSet& segment, SegmentSet& blackRegions, unsigned topk, double minSim);
+		void regionMerge();
 		inline void calculateConvexHulls();
 		inline void calculateBoundBoxes();
 		inline Rect hullBoundBox(PointSet& hull);

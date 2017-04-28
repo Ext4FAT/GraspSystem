@@ -47,16 +47,12 @@ void Segmentation::Segment(Mat& depth, Mat& color)
 		}
 	sort(mainSeg_.begin(), mainSeg_.end(),
 		[](const vector<Point>& v1, const vector<Point>& v2){return v1.size() > v2.size(); });
+	regionMerge();
 	// just select top-k
 	mainSeg_.resize(topk_);
 	// show segmentations
 	Mat disp = draw();
 	imshow("segmentation", disp);
-	//// calc boundbox
-	//for (auto mr : mainRegions_) {
-	//	Rect r = boundingRect(mr);
-	//	boundBoxes_.push_back(r);
-	//}
 }
 
 void Segmentation::DFS(Mat &depth, Mat &visit, Point cur, short &threshold, vector<Point> &v)
@@ -122,16 +118,17 @@ void Segmentation::completeDepth(Mat &depth)
 }
 
 
-void Segmentation::regionMerge(Mat& depth, SegmentSet& segment, SegmentSet& blackRegions, unsigned topk, double minSim)
+void Segmentation::regionMerge()
 {
+	double minSim = 1.0;
 	unsigned i, j;
-	topk = topk > segment.size() ? segment.size() : topk;
+	topk_ = topk_ > mainSeg_.size() ? mainSeg_.size() : topk_;
 	//
 	convexHulls_.clear();
 	boundBoxes_.clear();
 	distance_.clear();
 	//find convexHull of each region
-	for (auto seg : segment) {
+	for (auto seg : mainSeg_) {
 		//calculate convex hull
 		vector<Point> hull;
 		convexHull(seg, hull, false);
@@ -146,7 +143,7 @@ void Segmentation::regionMerge(Mat& depth, SegmentSet& segment, SegmentSet& blac
 		//distance_.push_back(dis / seg.size());
 	}
 	//fill black regions
-	for (int k = 0; k < topk; k++){
+	for (int k = 0; k < topk_; k++){
 		Rect r = boundBoxes_[k];
 		PointSet& hull = convexHulls_[k];
 		PointSet& ms = mainSeg_[k];
@@ -162,11 +159,11 @@ void Segmentation::regionMerge(Mat& depth, SegmentSet& segment, SegmentSet& blac
 		}
 	}
 	//merge small regions
-	for (j = topk; j < segment.size(); j++)
-		for (i = 0; i < topk; i++)
-			isRegionInsideHull(segment[j], hullSet[i], segment[i], minSim);
+	for (j = topk_; j < mainSeg_.size(); j++)
+		for (i = 0; i < topk_; i++)
+			isRegionInsideHull(mainSeg_[j], convexHulls_[i], mainSeg_[i], minSim);
 	//remain topk segment
-	segment.resize(topk);
+	mainSeg_.resize(topk_);
 }
 
 
