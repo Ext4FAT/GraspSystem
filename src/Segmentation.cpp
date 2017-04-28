@@ -37,13 +37,12 @@ void Segmentation::Segment(Mat& depth, Mat& color)
 			Point current(i, j);
 			if (!visit.at<char>(current)) {
 				short value = depth.at<short>(current);
-				PointSet pSet;
-				NonRecursive(depth, visit, current, pSet);
 				//insert segment
-				if (!value)
-					blackSeg_.push_back(pSet);
-				else
+				if (value) {
+					PointSet pSet;
+					NonRecursive(depth, visit, current, pSet);
 					mainSeg_.push_back(pSet);
+				}
 			}
 		}
 	sort(mainSeg_.begin(), mainSeg_.end(),
@@ -125,26 +124,44 @@ void Segmentation::completeDepth(Mat &depth)
 
 void Segmentation::regionMerge(Mat& depth, SegmentSet& segment, SegmentSet& blackRegions, unsigned topk, double minSim)
 {
-	vector<vector<Point>> hullSet;
 	unsigned i, j;
-
 	topk = topk > segment.size() ? segment.size() : topk;
+	//
+	convexHulls_.clear();
+	boundBoxes_.clear();
+	distance_.clear();
 	//find convexHull of each region
 	for (auto seg : segment) {
+		//calculate convex hull
 		vector<Point> hull;
 		convexHull(seg, hull, false);
-		hullSet.push_back(hull);
-		double dis = 0;
-		for (auto p : seg)
-			dis += depth.at<short>(p);
-		distance_.push_back(dis / seg.size());
+		convexHulls_.push_back(hull);
+		//find convex hull bounding box
+		Rect r = boundingRect(hull);
+		boundBoxes_.push_back(r);
+		////calculate distance
+		//double dis = 0;
+		//for (auto p : seg)
+		//	dis += depth.at<short>(p);
+		//distance_.push_back(dis / seg.size());
 	}
 	//fill black regions
-	for (auto br : blackRegions)
-		for (i = 0; i < topk; i++)
-			isRegionInsideHull(br, hullSet[i], segment[i], minSim);
-	//isBlackRegionInsideHull(br, hullSet[i], segment[i], minSim, depth, distance[i]);
-	//merge
+	for (int k = 0; k < topk; k++){
+		Rect r = boundBoxes_[k];
+		PointSet& hull = convexHulls_[k];
+		PointSet& ms = mainSeg_[k];
+		Point tl = r.tl();
+		Point br = r.br();
+		for (int i = tl.x; i <= br.x; i++){
+			for (int j = tl.y; j <= br.y; j++){
+				Point p = Point(i, j);
+				if (pointPolygonTest(hull, p, false) >= 0) {
+					ms.push_back(p);
+				}
+			}
+		}
+	}
+	//merge small regions
 	for (j = topk; j < segment.size(); j++)
 		for (i = 0; i < topk; i++)
 			isRegionInsideHull(segment[j], hullSet[i], segment[i], minSim);

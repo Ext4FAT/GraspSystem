@@ -45,6 +45,16 @@ size_t PXC2PCL(PointSet &pSet, vector<PXCPoint3DF32> &vertices, PointCloudNT::Pt
 		ps.y = ppp.y*scale;
 		ps.z = ppp.z*scale;
 	}
+
+	for (auto p : vertices){
+		scene->push_back(PointNT());
+		PointNT& ps = scene->back();
+		ps.x = p.x;
+		ps.y = p.y;
+		ps.z = p.z;
+	}
+
+
 	return scene->size();
 }
 
