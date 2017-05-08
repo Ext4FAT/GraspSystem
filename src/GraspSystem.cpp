@@ -163,7 +163,6 @@ Rect operator/(const Rect &r, int scale)
 //	}
 //}
 
-
 //Press Mouse to select point
 void GraspSystem::selectPoint(int event, int x, int y, int flags, void* paras)
 {
@@ -642,4 +641,134 @@ Mat GraspSystem::makeChessBoard(int pixels, int count)
 	}
 	imwrite("chess" + to_string(count) + ".png", chess);
 	return chess;
+}
+
+
+PXCImage* GraspSystem::Mat2PXCImage(Mat& depth)
+{
+	//PXCSession *pxcsession_ = PXCSession::CreateInstance();
+	PXCImage::ImageInfo iinfo;
+	iinfo.height = depth.rows;
+	iinfo.width = depth.cols;
+	iinfo.format = PXCImage::PIXEL_FORMAT_DEPTH;
+	PXCImage::ImageData idata;
+	idata.format = PXCImage::PIXEL_FORMAT_DEPTH;
+	idata.pitches[0] = depth.step[0] * sizeof(uchar);
+	idata.planes[0] = depth.data;
+	PXCImage *pxcdepth = pxcsession_->CreateImage(&iinfo, &idata);
+	return pxcdepth;
+}
+
+
+int GraspSystem::testDataSet(string Dir)
+{
+	// Define variable
+	clock_t start, end;
+	Mat color, depth, display;
+	PXC3DPointSet pointscloud(camera_.height*camera_.width);
+	// Configure RealSense
+	configureRealsense();
+	RealsensePointsCloud dw(pxcsession_, camera_);
+	//
+	Mat trans = Mat::eye(4, 4, CV_32FC1);
+	Directory directory;
+	vector<string> categories = directory.getSubdirName(Dir + "\\color\\");
+	for (auto category : categories){
+		string categoryDir = Dir + "\\color\\" + category;
+		vector<string> imgNames = directory.getCurdirFileName(categoryDir);
+		for (auto name : imgNames){
+			// Dir
+			string colorpath = categoryDir + "\\" + name;
+			string depthPath = Dir + "\\depth\\" + name;
+			cout << depthPath << endl;
+			// Read color and depth
+			Mat color = imread(colorpath);
+			Mat depth = imread(depthPath, CV_LOAD_IMAGE_UNCHANGED);
+			// Construct PXCImage from Mat depth 
+			pxcdepth_ = Mat2PXCImage(depth);
+			// Generate and Show 3D Point Cloud
+			pxcStatus sts = projection_->QueryVertices(pxcdepth_, &pointscloud[0]);
+			if (sts >= PXC_STATUS_NO_ERROR) {
+				PXCImage* drawVertices = dw_.DepthToWorldByQueryVertices(pointscloud, pxcdepth_);
+				if (drawVertices)
+					display = PXCImage2Mat(drawVertices);
+			}
+			// Configure classification
+			Classification classifier("..\\classifier\\object.xml");
+			classifier.setCategory({ "background", "cup" });
+			// Algorithm
+			SCRL(color, depth, display, pointscloud, classifier);
+			// Release Realsense SDK memory and read next frame 
+			pxcdepth_->Release();
+		}
+	}
+	return 1;
+}
+
+
+int GraspSystem::SCRL(Mat &color, Mat &depth, Mat &display, PXC3DPointSet& pointscloud, Classification& classifier)
+{
+	Mat color2, depth2, display2;
+	// configure segmentation
+	Size segSize(320, 240);
+	unsigned topk = 6;
+	short threshold = 2;
+	Segmentation myseg(segSize, topk, threshold);
+	static vector<Scalar> drawColor = { Scalar(255, 0, 0), Scalar(0, 0, 255) };
+	// configure registration
+	RegisterParameter para;
+	RegistrationPCL ransac(para);
+	ransac.Preparation({ "papercup" });
+	// resize
+	resize(color, color2, segSize);
+	resize(depth, depth2, segSize);
+	resize(display, display2, segSize);
+	// segmentation
+	myseg.Segment(depth2, color2);
+	const SegmentSet& mainSeg = myseg.mainSegmentation();
+	// classification
+	Category categories = classifier.category();
+	for (auto ms : mainSeg){
+		Rect r = cv::boundingRect(ms);
+		Mat roi = color2(r);
+		int p = classifier.predict(roi);
+		if (p){
+			double scale = 1.0 / 350;
+			Mat ROI;
+			Mat mask = Mat::zeros(segSize, CV_8UC1);
+			mask(r).setTo(255);
+			display2.copyTo(ROI, mask);
+			imshow("pointscloud", ROI);
+			// registration
+			PointCloudNT::Ptr seg(new PointCloudNT);
+			size_t sz = PXC2PCL(ms, pointscloud, seg, scale);
+			MESSAGE_COUT("INFO", "Generate Point Cloud: " << sz);
+			Matrix4f transformation = ransac.Apply(seg, p);
+			// reflect
+			PointCloudNT::Ptr model_align(new PointCloudNT);
+			PointCloudT::Ptr grasp_align(new PointCloudT);
+			ransac.Transform(transformation, model_align, grasp_align, p);
+			// convert Points cloud to PXC3DPoint set
+			PXC3DPointSet model3d = PCL2PXC(model_align, scale);
+			PXC3DPointSet grasp3d = PCL2PXC(grasp_align, scale);
+			// query 2D points
+			PointSet model2d = cvt3Dto2D(model3d);
+			PointSet grasp2d = cvt3Dto2D(grasp3d);
+			Rect mRect = boundingRect(model2d);
+			Rect gRect = boundingRect(grasp2d);
+			//
+			double sim = 1.0 * ((mRect / 2)&r).area() / ((mRect / 2) | r).area();
+			if (sim > 0.85){
+				for (auto m : model2d)
+					color.at<Vec3b>(m) = COLOR_MODEL;
+				for (auto g : grasp2d)
+					color.at<Vec3b>(g) = COLOR_GRASP;
+				imshow("reflect", color);
+			}
+		}
+		rectangle(color2, r, drawColor[p], 2);
+	}
+	imshow("regions", color2);
+	myseg.clear();
+	waitKey(-1);
 }

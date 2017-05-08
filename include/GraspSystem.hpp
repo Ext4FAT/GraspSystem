@@ -12,7 +12,7 @@ using std::condition_variable;
 
 using _IDLER_::RealsensePointsCloud;
 using _IDLER_::Segmentation;
-//using _IDLER_::Classification;
+using _IDLER_::Classification;
 
 
 typedef vector<PXCPointF32> PXC2DPointSet;
@@ -32,6 +32,14 @@ public:
 	int dobotCTRL();
 	// localize point 
 	int graspLocalization();
+	/********************************************/
+	int testDataSet(string Dir);
+	int SCRL(	Mat &color,
+				Mat &depth,
+				Mat &display,
+				PXC3DPointSet& pointscloud,
+				Classification& classifier	);
+	/*******************************************/
 private:
 	// Callback
 	static void selectPoint(int event, int x, int y, int flags, void* paras);
@@ -39,6 +47,7 @@ private:
 	void drawCornerText(const Mat &color, const Mat &depth, const vector<Point2f> &corners);
 	void placeWindows(int topk);
 	Mat PXCImage2Mat(PXCImage* pxc);
+	PXCImage* Mat2PXCImage(Mat& depth);
 	PointSet cvt3Dto2D(PXC3DPointSet &ps3d);
 	// Dobot related 
 	int commandParse(int key);
