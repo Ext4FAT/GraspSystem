@@ -35,7 +35,7 @@ public:
 	int graspLocalization();
 	/********************************************/
 	int testDataSet(string Dir);
-	int SCRL(	Mat &color,
+	Rect SCRL(	Mat &color,
 				Mat &depth,
 				Mat &display,
 				PXC3DPointSet& pointscloud,

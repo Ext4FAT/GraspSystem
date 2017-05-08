@@ -55,4 +55,4 @@ Some configuration
 #define GRASP_ACTION "实施抓取！"
 
 #define COLOR_MODEL Vec3b(255, 255, 0)
-#define COLOR_GRASP Vec3b(0, 0, 255);
+#define COLOR_GRASP Vec3b(0, 255, 255)

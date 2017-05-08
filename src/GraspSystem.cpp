@@ -652,7 +652,6 @@ PXCImage* GraspSystem::Mat2PXCImage(Mat& depth)
 
 int GraspSystem::testDataSet(string Dir)
 {
-	placeWindows(6);
 	// Define variable
 	clock_t start, end;
 	Mat color, depth, display;
@@ -660,11 +659,14 @@ int GraspSystem::testDataSet(string Dir)
 	// Configure RealSense
 	configureRealsense();
 	RealsensePointsCloud dw(pxcsession_, camera_);
-	//
-	Mat trans = Mat::eye(4, 4, CV_32FC1);
+	// Open Dataset
+	ofstream ofs(Dir + "\\bottle-res.csv");
 	Directory directory;
 	vector<string> categories = directory.getSubdirName(Dir + "\\color\\");
+	int index = 0;
 	for (auto category : categories){
+		if (index++ > 0)
+			break;
 		string categoryDir = Dir + "\\color\\" + category;
 		vector<string> imgNames = directory.getCurdirFileName(categoryDir);
 		for (auto name : imgNames){
@@ -688,17 +690,21 @@ int GraspSystem::testDataSet(string Dir)
 			Classification classifier("..\\classifier\\object.xml");
 			classifier.setCategory({ "background", "bottle" });
 			// Algorithm
-			SCRL(color, depth, display, pointscloud, classifier);
+			Rect res = SCRL(color, depth, display, pointscloud, classifier);
+			ofs << name << ", " << res << endl;
 			// Release Realsense SDK memory and read next frame 
-			pxcdepth_->Release();
+			//pxcdepth_->Release();
 		}
 	}
+	ofs.close();
 	return 1;
 }
 
 
-int GraspSystem::SCRL(Mat &color, Mat &depth, Mat &display, PXC3DPointSet& pointscloud, Classification& classifier)
+Rect GraspSystem::SCRL(Mat &color, Mat &depth, Mat &display, PXC3DPointSet& pointscloud, Classification& classifier)
 {
+	Rect res;
+
 	Mat color2, depth2, display2;
 	// configure segmentation
 	Size segSize(320, 240);
@@ -728,7 +734,7 @@ int GraspSystem::SCRL(Mat &color, Mat &depth, Mat &display, PXC3DPointSet& point
 		//int p = classifier.predict(roi);
 		int p = 1;
 		if (p){
-			double scale = 1.0 / 350;
+			double scale = 1.0 / 340;
 			Mat ROI;
 			Mat mask = Mat::zeros(segSize, CV_8UC1);
 			mask(r).setTo(255);
@@ -738,32 +744,39 @@ int GraspSystem::SCRL(Mat &color, Mat &depth, Mat &display, PXC3DPointSet& point
 			PointCloudNT::Ptr seg(new PointCloudNT);
 			size_t sz = PXC2PCL(ms, pointscloud, seg, scale);
 			MESSAGE_COUT("INFO", "Generate Point Cloud: " << sz);
-			Matrix4f transformation = ransac.Apply(seg, p);
-			// reflect
-			PointCloudNT::Ptr model_align(new PointCloudNT);
-			PointCloudT::Ptr grasp_align(new PointCloudT);
-			ransac.Transform(transformation, model_align, grasp_align, p);
-			// convert Points cloud to PXC3DPoint set
-			PXC3DPointSet model3d = PCL2PXC(model_align, scale);
-			PXC3DPointSet grasp3d = PCL2PXC(grasp_align, scale);
-			// query 2D points
-			PointSet model2d = cvt3Dto2D(model3d);
-			PointSet grasp2d = cvt3Dto2D(grasp3d);
-			Rect mRect = boundingRect(model2d);
-			Rect gRect = boundingRect(grasp2d);
-			//
-			double sim = 1.0 * ((mRect / 2)&r).area() / ((mRect / 2) | r).area();
-			if (sim > 0.85){
-				for (auto m : model2d)
-					color.at<Vec3b>(m) = COLOR_MODEL;
-				for (auto g : grasp2d)
-					color.at<Vec3b>(g) = COLOR_GRASP;
-				imshow("reflect", color);
-			}
+			double sim = 0;
+			//do {
+				Matrix4f transformation = ransac.Apply(seg, p);
+				// reflect
+				PointCloudNT::Ptr model_align(new PointCloudNT);
+				PointCloudT::Ptr grasp_align(new PointCloudT);
+				ransac.Transform(transformation, model_align, grasp_align, p);
+				// convert Points cloud to PXC3DPoint set
+				PXC3DPointSet model3d = PCL2PXC(model_align, scale);
+				PXC3DPointSet grasp3d = PCL2PXC(grasp_align, scale);
+				// query 2D points
+				PointSet model2d = cvt3Dto2D(model3d);
+				PointSet grasp2d = cvt3Dto2D(grasp3d);
+				Rect mRect = boundingRect(model2d);
+				Rect gRect = boundingRect(grasp2d);
+				//
+				sim = 1.0 * ((mRect / 2)&r).area() / ((mRect / 2) | r).area();
+				//if (sim > 0.85){
+					for (auto m : model2d)
+						color.at<Vec3b>(m) = COLOR_MODEL;
+					for (auto g : grasp2d)
+						color.at<Vec3b>(g) = COLOR_GRASP;
+					res = boundingRect(grasp2d);
+					rectangle(color, res, Scalar(255, 0, 0), 2);
+					imshow("reflect", color);
+				//}
+			//} while (sim < 0.85);
 		}
 		rectangle(color2, r, drawColor[p], 2);
 	}
 	imshow("regions", color2);
-	waitKey(-1);
+	waitKey(1);
 	myseg.clear();
+
+	return res;
 }
