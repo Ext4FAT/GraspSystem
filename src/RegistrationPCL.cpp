@@ -9,7 +9,8 @@ using namespace _IDLER_;
 
 Objects::Objects(vector<string> catergories)
 {
-	static string prefix = "..//models//";
+	//static string prefix = "..//models//";
+	static string prefix = "..//desktop//";
 	static string suffix_grasp = "-grasp-scaled.pcd";
 	static string suffix_model = "-scaled.pcd";
 	int cnt = 0;

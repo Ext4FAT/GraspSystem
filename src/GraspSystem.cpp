@@ -45,16 +45,6 @@ size_t PXC2PCL(PointSet &pSet, vector<PXCPoint3DF32> &vertices, PointCloudNT::Pt
 		ps.y = ppp.y*scale;
 		ps.z = ppp.z*scale;
 	}
-
-	for (auto p : vertices){
-		scene->push_back(PointNT());
-		PointNT& ps = scene->back();
-		ps.x = p.x;
-		ps.y = p.y;
-		ps.z = p.z;
-	}
-
-
 	return scene->size();
 }
 
@@ -662,6 +652,7 @@ PXCImage* GraspSystem::Mat2PXCImage(Mat& depth)
 
 int GraspSystem::testDataSet(string Dir)
 {
+	placeWindows(6);
 	// Define variable
 	clock_t start, end;
 	Mat color, depth, display;
@@ -695,7 +686,7 @@ int GraspSystem::testDataSet(string Dir)
 			}
 			// Configure classification
 			Classification classifier("..\\classifier\\object.xml");
-			classifier.setCategory({ "background", "cup" });
+			classifier.setCategory({ "background", "bottle" });
 			// Algorithm
 			SCRL(color, depth, display, pointscloud, classifier);
 			// Release Realsense SDK memory and read next frame 
@@ -718,7 +709,7 @@ int GraspSystem::SCRL(Mat &color, Mat &depth, Mat &display, PXC3DPointSet& point
 	// configure registration
 	RegisterParameter para;
 	RegistrationPCL ransac(para);
-	ransac.Preparation({ "papercup" });
+	ransac.Preparation({ "bottle" });
 	// resize
 	resize(color, color2, segSize);
 	resize(depth, depth2, segSize);
@@ -728,10 +719,14 @@ int GraspSystem::SCRL(Mat &color, Mat &depth, Mat &display, PXC3DPointSet& point
 	const SegmentSet& mainSeg = myseg.mainSegmentation();
 	// classification
 	Category categories = classifier.category();
+	int kkkkkk = 0;
 	for (auto ms : mainSeg){
+		if (kkkkkk++ > 0)
+			break;
 		Rect r = cv::boundingRect(ms);
 		Mat roi = color2(r);
-		int p = classifier.predict(roi);
+		//int p = classifier.predict(roi);
+		int p = 1;
 		if (p){
 			double scale = 1.0 / 350;
 			Mat ROI;
@@ -769,6 +764,6 @@ int GraspSystem::SCRL(Mat &color, Mat &depth, Mat &display, PXC3DPointSet& point
 		rectangle(color2, r, drawColor[p], 2);
 	}
 	imshow("regions", color2);
-	myseg.clear();
 	waitKey(-1);
+	myseg.clear();
 }
