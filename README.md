@@ -8,7 +8,7 @@ Grasp system is implemented through RGB-D data captured by [Intel Realsense F200
 Install the driver of [Dobot Magician](http://www.dobot.cc/) and run the [Dobot server](http://github.com/Ext4FAT/MechanicalArm)
 
 ### Operation
-There are some hotkeys help us control[Dobot](http://github.com/Ext4FAT/MechanicalArm) before do automatic grasping work.
+There are some hotkeys help us control [Dobot](http://github.com/Ext4FAT/MechanicalArm) before do automatic grasping work.
 
 |Hotkey|Operation|
 |:---:|:---:|
