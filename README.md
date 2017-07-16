@@ -9,6 +9,7 @@ Install the driver of [Dobot Magician](http://www.dobot.cc/) and run the [Dobot 
 
 ### Operation
 There are some hotkeys help us control[Dobot](http://github.com/Ext4FAT/MechanicalArm) before do automatic grasping work.
+
 |Hotkey|Operation|
 |:---:|:---:|
 |Space|Find ChessBoard|
